@@ -121,12 +121,14 @@
   @media (hover: hover) { .day-cell:hover { background: var(--accent-soft); cursor: pointer; } }
   .day-cell.is-today { box-shadow: inset 0 2px 0 var(--accent); }
 
-  .day-num-wrap { display: flex; align-items: center; }
+  .day-num-wrap { display: flex; align-items: center; min-width: 0; }
   .day-num { font-weight: 700; font-variant-numeric: tabular-nums; font-size: 0.85rem; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
   .is-other-month .day-num { color: var(--ink-400); }
   .is-today .day-num { background: var(--accent); color: var(--surface-raised); }
   .day-weekday-inline { display: none; font-size: 0.62rem; color: var(--ink-500); font-weight: 600; }
-  .day-reco-dot { width: 9px; height: 9px; border-radius: 50%; background: transparent; border: 2px solid var(--ink-400); flex: none; margin-inline-start: 5px; }
+  .day-reco { display: inline-flex; align-items: center; gap: 4px; margin-inline-start: 5px; min-width: 0; flex: 1 1 auto; overflow: hidden; }
+  .day-reco-dot { width: 8px; height: 8px; border-radius: 50%; background: transparent; border: 2px solid var(--ink-400); flex: none; }
+  .day-reco-label { font-size: 0.62rem; font-weight: 600; color: var(--ink-500); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; max-width: 88px; }
 
   .chips-wrap { display: flex; flex-direction: column; gap: 3px; overflow: hidden; }
   .chip { display: flex; align-items: center; gap: 5px; padding: 3px 6px; border-radius: 7px; border: 1px solid var(--line); background: var(--surface-raised); font-size: 0.72rem; max-width: 100%; text-align: start; }
@@ -165,6 +167,13 @@
   .modal { background: var(--surface-raised); border-radius: 14px; padding: 20px; width: 100%; max-width: 440px; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 50px -12px color-mix(in srgb, black 35%, transparent); transform: translateY(8px) scale(0.98); transition: transform 0.18s ease; }
   .modal-overlay.is-open .modal { transform: translateY(0) scale(1); }
   @media (prefers-reduced-motion: reduce) { .modal-overlay, .modal { transition: none; } }
+
+  .save-error-toast { position: fixed; bottom: 20px; inset-inline: 20px; max-width: 460px; margin-inline: auto; z-index: 300; display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px; background: var(--danger); color: var(--surface-raised); font-size: 0.82rem; line-height: 1.5; box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.4); opacity: 0; visibility: hidden; transform: translateY(8px); transition: opacity 0.18s ease, transform 0.18s ease; }
+  .save-error-toast.is-visible { opacity: 1; visibility: visible; transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) { .save-error-toast { transition: none; } }
+  .save-error-toast span { flex: 1; }
+  .save-error-close { flex: none; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; color: var(--surface-raised); opacity: 0.85; font-size: 0.75rem; }
+  .save-error-close:hover { opacity: 1; }
 
   .modal-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
   .modal-header h2 { font-size: 1.05rem; font-weight: 800; text-wrap: balance; }
@@ -262,6 +271,9 @@
   .ig-watch-note { font-size: 0.76rem; color: var(--ink-500); margin: 0 0 12px; }
 
   .settings-intro { font-size: 0.78rem; color: var(--ink-500); line-height: 1.5; margin: 0 0 12px; }
+  .weekday-picker { display: flex; gap: 6px; margin-bottom: 14px; }
+  .weekday-toggle-btn { flex: 1; height: 36px; border-radius: 9px; border: 1px solid var(--line); background: var(--surface); color: var(--ink-500); font-size: 0.82rem; font-weight: 700; }
+  .weekday-toggle-btn.is-active { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
   .settings-list-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; padding: 0 4px; }
   .settings-list-head-name { flex: 1; font-size: 0.68rem; font-weight: 700; color: var(--ink-400); }
   .settings-list-head-qty { width: 52px; text-align: center; font-size: 0.68rem; font-weight: 700; color: var(--ink-400); }
@@ -345,7 +357,10 @@
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>
         </button>
       </div>
-      <p class="settings-intro">קבעו כמה פעמים בשבוע תרצו להעלות מכל סוג — לפי הפרופורציה ביניהם הלוח ימליץ מה להעלות בכל יום.</p>
+      <label class="field-label">ימי העלאה</label>
+      <p class="settings-intro">סמנו על אילו ימים בשבוע אתם מעלים תוכן בכלל — שאר הימים לא יקבלו המלצה.</p>
+      <div class="weekday-picker" id="weekdayPicker"></div>
+      <p class="settings-intro">קבעו כמה פעמים בשבוע תרצו להעלות מכל סוג — לפי הפרופורציה ביניהם הלוח ימליץ מה להעלות בכל יום פעיל.</p>
       <div class="settings-list-head">
         <span class="settings-list-head-name">סוג תוכן</span>
         <span class="settings-list-head-qty">לשבוע</span>
@@ -444,10 +459,13 @@
         if (parsed && Array.isArray(parsed.types) && Array.isArray(parsed.items)) return parsed;
       }
     } catch (e) {}
-    return { types: DEFAULT_TYPES.map(function (t) { return { id: t.id, name: t.name, color: t.color }; }), items: [] };
+    return { types: DEFAULT_TYPES.map(function (t) { return { id: t.id, name: t.name, color: t.color }; }), items: [], activeWeekdays: [true, true, true, true, true, true, true] };
   }
 
   var state = loadState();
+  if (!Array.isArray(state.activeWeekdays) || state.activeWeekdays.length !== 7) {
+    state.activeWeekdays = [true, true, true, true, true, true, true];
+  }
 
   function mergeIgImport() {
     var importData = window.IG_IMPORT_DATA;
@@ -521,8 +539,45 @@
   var today = new Date();
   var view = { year: today.getFullYear(), month: today.getMonth() };
 
+  var saveErrorEl = null;
+  var saveErrorMsgEl = null;
+  var saveErrorHideTimer = null;
+  function showSaveError(message, persistentToast) {
+    if (!saveErrorEl) {
+      saveErrorEl = document.createElement("div");
+      saveErrorEl.className = "save-error-toast";
+      saveErrorMsgEl = document.createElement("span");
+      var closeBtn = document.createElement("button");
+      closeBtn.type = "button";
+      closeBtn.className = "save-error-close";
+      closeBtn.textContent = "✕";
+      closeBtn.setAttribute("aria-label", "סגירה");
+      closeBtn.addEventListener("click", function () {
+        saveErrorEl.classList.remove("is-visible");
+        clearTimeout(saveErrorHideTimer);
+      });
+      saveErrorEl.appendChild(saveErrorMsgEl);
+      saveErrorEl.appendChild(closeBtn);
+      document.body.appendChild(saveErrorEl);
+    }
+    saveErrorMsgEl.textContent = message;
+    saveErrorEl.classList.add("is-visible");
+    clearTimeout(saveErrorHideTimer);
+    if (!persistentToast) {
+      saveErrorHideTimer = setTimeout(function () {
+        saveErrorEl.classList.remove("is-visible");
+      }, 7000);
+    }
+  }
+
   function persist() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      return true;
+    } catch (e) {
+      showSaveError("שגיאה בשמירה — השינוי האחרון לא נשמר בדפדפן (יתכן שנגמר מקום אחסון, או שהדפדפן חוסם שמירה במצב זה).");
+      return false;
+    }
   }
 
   function pad2(n) { return n < 10 ? "0" + n : "" + n; }
@@ -546,26 +601,38 @@
   // remainder / Hamilton apportionment), then arrange the picks across the week with a
   // greedy max-count-first placement so identical types never land on adjacent days
   // unless the numbers leave no other option.
-  function computeWeekAssignment(activeTypes, startPrevType) {
+  function getActiveWeekdaySet() {
+    var arr = state.activeWeekdays;
+    var set = new Set();
+    for (var i = 0; i < 7; i++) {
+      if (!arr || arr.length !== 7 || arr[i]) set.add(i);
+    }
+    return set;
+  }
+
+  function computeWeekAssignment(activeTypes, startPrevType, slotCount) {
+    var emptyPicks = [];
+    for (var e = 0; e < slotCount; e++) emptyPicks.push(null);
+
     var totalWeight = 0;
     for (var i = 0; i < activeTypes.length; i++) totalWeight += activeTypes[i].weeklyTarget;
-    if (totalWeight <= 0) return { picks: [null, null, null, null, null, null, null], lastType: startPrevType };
+    if (totalWeight <= 0 || slotCount <= 0) return { picks: emptyPicks, lastType: startPrevType };
 
     var shares = activeTypes.map(function (t) {
-      var exact = (7 * t.weeklyTarget) / totalWeight;
+      var exact = (slotCount * t.weeklyTarget) / totalWeight;
       var count = Math.floor(exact);
       return { id: t.id, count: count, remainder: exact - count };
     });
     var allocated = 0;
     for (var i2 = 0; i2 < shares.length; i2++) allocated += shares[i2].count;
-    var remaining = 7 - allocated;
+    var remaining = slotCount - allocated;
     var byRemainder = shares.slice().sort(function (a, b) { return b.remainder - a.remainder; });
     for (var r = 0; r < remaining; r++) byRemainder[r % byRemainder.length].count++;
 
     var pool = shares.filter(function (s) { return s.count > 0; }).map(function (s) { return { id: s.id, count: s.count }; });
     var picks = [];
     var prev = startPrevType;
-    for (var d = 0; d < 7; d++) {
+    for (var d = 0; d < slotCount; d++) {
       pool.sort(function (a, b) { return b.count - a.count; });
       var pick = null;
       for (var p = 0; p < pool.length; p++) {
@@ -584,18 +651,22 @@
   function computeMonthRecommendations(year, month) {
     var map = {};
     var activeTypes = state.types.filter(function (t) { return (t.weeklyTarget || 0) > 0; });
-    if (activeTypes.length === 0) return map;
+    var activeWeekdaySet = getActiveWeekdaySet();
+    if (activeTypes.length === 0 || activeWeekdaySet.size === 0) return map;
 
     var firstWeekday = new Date(year, month, 1).getDay();
     var daysInMonth = new Date(year, month + 1, 0).getDate();
     var daysInPrevMonth = new Date(year, month, 0).getDate();
     var totalCells = Math.ceil((firstWeekday + daysInMonth) / 7) * 7;
     var totalWeeks = totalCells / 7;
+    var slotsPerWeek = activeWeekdaySet.size;
 
     var prevType = null;
     for (var w = 0; w < totalWeeks; w++) {
-      var weekResult = computeWeekAssignment(activeTypes, prevType);
+      var weekResult = computeWeekAssignment(activeTypes, prevType, slotsPerWeek);
+      var pickIdx = 0;
       for (var d = 0; d < 7; d++) {
+        if (!activeWeekdaySet.has(d)) continue;
         var i = w * 7 + d;
         var dayNum = i - firstWeekday + 1;
         var cellDate;
@@ -603,7 +674,8 @@
         else if (dayNum > daysInMonth) cellDate = new Date(year, month + 1, dayNum - daysInMonth);
         else cellDate = new Date(year, month, dayNum);
         var key = dateKey(cellDate.getFullYear(), cellDate.getMonth(), cellDate.getDate());
-        var pick = weekResult.picks[d];
+        var pick = weekResult.picks[pickIdx];
+        pickIdx++;
         if (pick) map[key] = pick;
       }
       prevType = weekResult.lastType;
@@ -724,6 +796,7 @@
   var settingsModalCloseBtn = document.getElementById("settingsModalCloseBtn");
   var settingsListEl = document.getElementById("settingsList");
   var settingsSummaryEl = document.getElementById("settingsSummary");
+  var weekdayPickerEl = document.getElementById("weekdayPicker");
   var addTypeBtn = document.getElementById("addTypeBtn");
 
   // ---------- modal state ----------
@@ -749,9 +822,31 @@
     dayModalOverlay.classList.remove("is-open");
     unlockScrollIfClear();
   }
+  function renderWeekdayPicker() {
+    weekdayPickerEl.innerHTML = "";
+    WEEKDAY_LABELS.forEach(function (label, idx) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "weekday-toggle-btn" + (state.activeWeekdays[idx] ? " is-active" : "");
+      btn.textContent = label;
+      btn.setAttribute("aria-pressed", state.activeWeekdays[idx] ? "true" : "false");
+      btn.title = state.activeWeekdays[idx] ? "יום העלאה — לחצו לביטול" : "אין העלאה ביום זה — לחצו להפעלה";
+      btn.addEventListener("click", function () {
+        state.activeWeekdays[idx] = !state.activeWeekdays[idx];
+        persist();
+        renderWeekdayPicker();
+        renderSettingsSummary();
+        renderHeader();
+        renderCalendar();
+      });
+      weekdayPickerEl.appendChild(btn);
+    });
+  }
+
   function openSettingsModal() {
     settingsModalOverlay.classList.add("is-open");
     lockScroll();
+    renderWeekdayPicker();
     renderSettingsList();
   }
   function closeSettingsModal() {
@@ -1551,10 +1646,11 @@
 
   function renderSettingsSummary() {
     var total = state.types.reduce(function (s, t) { return s + (t.weeklyTarget || 0); }, 0);
+    var activeDays = getActiveWeekdaySet().size;
     if (total <= 0) {
       settingsSummaryEl.textContent = "עדיין לא נקבעו כמויות — הלוח לא ימליץ עד שתגדירו לפחות סוג אחד.";
     } else {
-      settingsSummaryEl.textContent = "סה\"כ לשבוע: " + total + " מתוך יעד של 7 ימים" + (total === 7 ? " ✓" : "") + ".";
+      settingsSummaryEl.textContent = "סה\"כ לשבוע: " + total + " מתוך " + activeDays + " ימי העלאה שסימנתם" + (total === activeDays ? " ✓" : "") + ".";
     }
   }
 
@@ -1710,11 +1806,18 @@
       if (!otherMonth && dayItems.length === 0 && currentRecoMap[key]) {
         var recoType = findType(currentRecoMap[key]);
         if (recoType) {
+          var recoWrap = document.createElement("span");
+          recoWrap.className = "day-reco";
+          recoWrap.title = "המלצה להיום: " + recoType.name;
           var recoDot = document.createElement("span");
           recoDot.className = "day-reco-dot";
           recoDot.style.borderColor = recoType.color;
-          recoDot.title = "המלצה להיום: " + recoType.name;
-          numWrap.appendChild(recoDot);
+          var recoLabel = document.createElement("span");
+          recoLabel.className = "day-reco-label";
+          recoLabel.textContent = recoType.name;
+          recoWrap.appendChild(recoDot);
+          recoWrap.appendChild(recoLabel);
+          numWrap.appendChild(recoWrap);
         }
       }
 
@@ -1765,6 +1868,16 @@
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") { closeDayModal(); closeSettingsModal(); }
   });
+
+  (function checkStorageAvailable() {
+    try {
+      var testKey = "__gantt_storage_test__";
+      localStorage.setItem(testKey, "1");
+      localStorage.removeItem(testKey);
+    } catch (e) {
+      showSaveError("שמירה בדפדפן הזה חסומה — שום שינוי לא יישמר עד שתשנו הגדרות פרטיות/עוגיות, או תעברו לדפדפן אחר.", true);
+    }
+  })();
 
   renderHeader();
   renderCalendar();
