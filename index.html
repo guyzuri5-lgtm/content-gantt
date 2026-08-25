@@ -475,7 +475,10 @@
     pulledOnce: false,
     pushTimer: null,
     pushing: false,
-    pendingPush: false
+    pendingPush: false,
+    igStatus: "unknown",
+    igMessage: "",
+    igCount: 0
   };
 
   var STORAGE_KEY = "content-gantt-data-v1";
@@ -1143,6 +1146,13 @@
     renderCloudPrompt();
   }
 
+  function setIgStatus(status, message, count) {
+    cloud.igStatus = status;
+    cloud.igMessage = message || "";
+    if (typeof count === "number") cloud.igCount = count;
+    if (syncModalOverlay.classList.contains("is-open")) renderSyncModal();
+  }
+
   function scheduleCloudPush() {
     if (!cloud.client || !cloud.user || !cloud.pulledOnce) return;
     clearTimeout(cloud.pushTimer);
@@ -1192,12 +1202,12 @@
           } else {
             setCloudStatus("synced", "");
           }
-          syncIgFromCloud();
+          syncIgFromCloud(true);
         } else {
           // אין עדיין לוח בענן — מעלים את מה שיש במכשיר הזה
           cloud.pulledOnce = true;
           pushToCloud();
-          syncIgFromCloud();
+          syncIgFromCloud(true);
         }
       }, function (e) {
         setCloudStatus("error", "המשיכה מהענן נכשלה: " + (e && e.message ? e.message : "שגיאה לא ידועה"));
@@ -1205,8 +1215,36 @@
   }
 
   // נתוני הרילז יושבים בטבלה נפרדת מאחורי ההתחברות, ולא בקובץ הפומבי
-  function syncIgFromCloud() {
+  function uploadIgToCloud() {
+    var embedded = window.IG_IMPORT_DATA;
+    if (!embedded || !Array.isArray(embedded.posts)) {
+      setIgStatus("error", "אין נתוני רילז מוטמעים בקובץ הזה להעלאה.");
+      return;
+    }
+    if (!cloud.client || !cloud.user) {
+      setIgStatus("error", "צריך להיות מחובר כדי להעלות.");
+      return;
+    }
+    setIgStatus("uploading", "מעלה " + embedded.posts.length + " רילז…");
+    cloud.client
+      .from(SUPABASE_IG_TABLE)
+      .upsert({ user_id: cloud.user.id, data: embedded, updated_at: new Date().toISOString() })
+      .then(function (up) {
+        if (up && up.error) {
+          setIgStatus("error", "ההעלאה נכשלה: " + up.error.message +
+            (up.error.hint ? " | " + up.error.hint : "") +
+            (up.error.code ? " (קוד " + up.error.code + ")" : ""));
+          return;
+        }
+        setIgStatus("present", "", embedded.posts.length);
+      }, function (e) {
+        setIgStatus("error", "ההעלאה נכשלה: " + (e && e.message ? e.message : "שגיאה לא ידועה"));
+      });
+  }
+
+  function syncIgFromCloud(autoUpload) {
     if (!cloud.client || !cloud.user) return;
+    setIgStatus("checking", "");
     cloud.client
       .from(SUPABASE_IG_TABLE)
       .select("data")
@@ -1214,11 +1252,13 @@
       .maybeSingle()
       .then(function (res) {
         if (res && res.error) {
-          setCloudStatus("error", "משיכת נתוני הרילז נכשלה: " + res.error.message);
+          setIgStatus("error", "הקריאה מהטבלה נכשלה: " + res.error.message +
+            (res.error.code ? " (קוד " + res.error.code + ")" : ""));
           return;
         }
         var remote = res && res.data ? res.data.data : null;
         if (remote && Array.isArray(remote.posts)) {
+          setIgStatus("present", "", remote.posts.length);
           if (mergeIgImport(remote)) {
             persistLocal();
             scheduleCloudPush();
@@ -1226,24 +1266,10 @@
           }
           return;
         }
-        // אין עדיין רילז בענן — העלאה חד־פעמית של מה שמוטמע בקובץ
-        var embedded = window.IG_IMPORT_DATA;
-        if (!embedded || !Array.isArray(embedded.posts)) return;
-        setCloudStatus("working", "מעביר " + embedded.posts.length + " רילז לענן…");
-        cloud.client
-          .from(SUPABASE_IG_TABLE)
-          .upsert({ user_id: cloud.user.id, data: embedded, updated_at: new Date().toISOString() })
-          .then(function (up) {
-            if (up && up.error) {
-              setCloudStatus("error", "העברת נתוני הרילז נכשלה: " + up.error.message);
-              return;
-            }
-            setCloudStatus("synced", "");
-          }, function (e) {
-            setCloudStatus("error", "העברת נתוני הרילז נכשלה: " + (e && e.message ? e.message : "שגיאה"));
-          });
+        setIgStatus("missing", "");
+        if (autoUpload) uploadIgToCloud();
       }, function (e) {
-        setCloudStatus("error", "משיכת נתוני הרילז נכשלה: " + (e && e.message ? e.message : "שגיאה"));
+        setIgStatus("error", "הקריאה מהטבלה נכשלה: " + (e && e.message ? e.message : "שגיאה לא ידועה"));
       });
   }
 
@@ -1334,6 +1360,40 @@
       who.textContent = "מחוברים כ־" + (cloud.user.email || "משתמש") + ". כל שינוי נשמר אוטומטית, וכל מכשיר שתתחברו בו יראה את אותו לוח.";
       syncCloudBodyEl.appendChild(who);
 
+      var igBox = document.createElement("div");
+      igBox.className = "import-preview";
+      var igText = document.createElement("p");
+      igText.className = "import-preview-text";
+      var igLabels = {
+        unknown: "נתוני רילז: טרם נבדק.",
+        checking: "בודק אם נתוני הרילז נמצאים בענן…",
+        present: "נתוני הרילז בענן ✓ (" + cloud.igCount + " רילז). הם נטענים מכאן ולא מהקובץ הפומבי.",
+        missing: "נתוני הרילז עדיין לא בענן. אפשר להעלות אותם מהקובץ עכשיו.",
+        uploading: cloud.igMessage || "מעלה…",
+        error: "שגיאה: " + cloud.igMessage
+      };
+      igText.textContent = igLabels[cloud.igStatus] || igLabels.unknown;
+      if (cloud.igStatus === "error") igText.style.color = "var(--danger)";
+      igBox.appendChild(igText);
+
+      var igActions = document.createElement("div");
+      igActions.className = "backup-actions";
+      var igUploadBtn = document.createElement("button");
+      igUploadBtn.type = "button";
+      igUploadBtn.className = "btn btn-primary";
+      igUploadBtn.textContent = "העלאת נתוני הרילז לענן";
+      igUploadBtn.disabled = cloud.igStatus === "uploading";
+      igUploadBtn.addEventListener("click", uploadIgToCloud);
+      var igCheckBtn = document.createElement("button");
+      igCheckBtn.type = "button";
+      igCheckBtn.className = "btn btn-ghost";
+      igCheckBtn.textContent = "בדיקה מחדש";
+      igCheckBtn.addEventListener("click", function () { syncIgFromCloud(false); });
+      igActions.appendChild(igUploadBtn);
+      igActions.appendChild(igCheckBtn);
+      igBox.appendChild(igActions);
+      syncCloudBodyEl.appendChild(igBox);
+
       var actions = document.createElement("div");
       actions.className = "backup-actions";
       var syncNowBtn = document.createElement("button");
@@ -1401,6 +1461,7 @@
     lockScroll();
     importPreviewEl.innerHTML = "";
     renderSyncModal();
+    if (cloud.user && (cloud.igStatus === "unknown" || cloud.igStatus === "error")) syncIgFromCloud(false);
   }
   function closeSyncModal() {
     syncModalOverlay.classList.remove("is-open");
