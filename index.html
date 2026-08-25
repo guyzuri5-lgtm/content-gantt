@@ -282,6 +282,16 @@
   .settings-row .text-input { flex: 1; }
   .type-quota-input { width: 52px; padding: 8px 4px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); text-align: center; font-size: 0.85rem; font-variant-numeric: tabular-nums; flex: none; }
   .settings-summary { font-size: 0.74rem; color: var(--ink-500); margin: 8px 0 0; }
+  .settings-section-divider { border: 0; border-top: 1px solid var(--line); margin: 22px 0 16px; }
+  .settings-row-spacer { flex: none; width: 97px; }
+  .settings-row-base-tag { flex: none; font-size: 0.68rem; font-weight: 700; color: var(--ink-400); }
+  .color-source-row { display: flex; align-items: center; gap: 10px; }
+  .color-source-row + .color-source-row { margin-top: 8px; }
+  .color-source-name { flex: 1; font-size: 0.84rem; color: var(--ink-600); }
+  .color-source-seg { display: flex; gap: 3px; flex: none; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface); }
+  .color-source-seg button { border: 0; background: transparent; border-radius: 6px; padding: 6px 11px; font-size: 0.78rem; font-weight: 700; color: var(--ink-500); }
+  .color-source-seg button.is-active { background: var(--accent-soft); color: var(--accent); }
+  .status-toggle-btn.is-active { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
 </style>
 </head>
 <body>
@@ -298,7 +308,7 @@
         </span>
         <h1>גאנט תוכן</h1>
       </div>
-      <button type="button" id="openSettingsBtn" class="icon-btn" aria-label="ניהול סוגי תוכן" title="ניהול סוגי תוכן">
+      <button type="button" id="openSettingsBtn" class="icon-btn" aria-label="הגדרות הלוח" title="הגדרות הלוח">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M11 3H4v7l8.5 8.5a1.5 1.5 0 0 0 2.12 0l4.38-4.38a1.5 1.5 0 0 0 0-2.12L11 3Z"/><circle cx="7.3" cy="7.3" r="1.1" fill="currentColor" stroke="none"/></svg>
       </button>
     </div>
@@ -318,15 +328,11 @@
       <div class="stat-tile"><span class="stat-value" id="statTotal">0</span><span class="stat-label">מתוכננים החודש</span></div>
       <div class="stat-tile"><span class="stat-value" id="statPosts">0</span><span class="stat-label">פוסטים</span></div>
       <div class="stat-tile"><span class="stat-value" id="statStories">0</span><span class="stat-label">סטוריז</span></div>
-      <div class="stat-tile"><span class="stat-value" id="statDone">0/0</span><span class="stat-label">תוזמנו</span></div>
+      <div class="stat-tile"><span class="stat-value" id="statDone">0/0</span><span class="stat-label" id="statDoneLabel">תוזמנו</span></div>
     </div>
 
     <div class="legend-row" id="legendRow"></div>
-    <p class="progress-legend">
-      <span class="legend-item"><span class="dot" style="background:#d03b3b"></span>טרם צולם</span>
-      <span class="legend-item"><span class="dot" style="background:#fab219"></span>בתהליך</span>
-      <span class="legend-item"><span class="dot" style="background:#0ca30c"></span>תוזמן</span>
-    </p>
+    <p class="progress-legend" id="progressLegend"></p>
     <p class="hint" id="hintText">טיפ: לחצו על כל יום בלוח כדי לשבץ בו תוכן חדש.</p>
   </header>
 
@@ -352,7 +358,7 @@
   <div class="modal-overlay" id="settingsModalOverlay">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
       <div class="modal-header">
-        <h2 id="settingsModalTitle">ניהול סוגי תוכן</h2>
+        <h2 id="settingsModalTitle">הגדרות הלוח</h2>
         <button type="button" class="icon-btn" id="settingsModalCloseBtn" aria-label="סגירה">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="5" y1="5" x2="15" y2="15"/><line x1="15" y1="5" x2="5" y2="15"/></svg>
         </button>
@@ -371,6 +377,23 @@
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="10" y1="4" x2="10" y2="16"/><line x1="4" y1="10" x2="16" y2="10"/></svg>
         <span>הוספת סוג תוכן</span>
       </button>
+
+      <hr class="settings-section-divider">
+      <label class="field-label">סטטוסי התקדמות</label>
+      <p class="settings-intro">אלו שלבי ההתקדמות של כל פיסת תוכן. אפשר לשנות שם וצבע, להוסיף שלב או למחוק. הסדר קובע — הצבע שמוצג הוא של השלב האחרון שסומן.</p>
+      <div class="settings-list-head">
+        <span class="settings-list-head-name">שלב</span>
+      </div>
+      <div class="settings-list" id="statusList"></div>
+      <button type="button" class="btn btn-add-dashed" id="addStatusBtn">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="10" y1="4" x2="10" y2="16"/><line x1="4" y1="10" x2="16" y2="10"/></svg>
+        <span>הוספת סטטוס</span>
+      </button>
+
+      <hr class="settings-section-divider">
+      <label class="field-label">צבעי הכרטיסייה בלוח</label>
+      <p class="settings-intro">בחרו ממה יושפע כל צבע — מסוג התוכן או מהסטטוס.</p>
+      <div id="colorSourceRows"></div>
     </div>
   </div>
 </div>
@@ -385,6 +408,18 @@
   var MONTH_NAMES = ["ינואר", "פברואר", "מרץ", "אפריל", "מאי", "יוני", "יולי", "אוגוסט", "ספטמבר", "אוקטובר", "נובמבר", "דצמבר"];
   var WEEKDAY_FULL = ["יום ראשון", "יום שני", "יום שלישי", "יום רביעי", "יום חמישי", "יום שישי", "יום שבת"];
   var PALETTE = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#4a3aa7", "#e34948"];
+
+  var STATUS_PALETTE = ["#d03b3b", "#fab219", "#0ca30c", "#2a78d6", "#8b5cf6", "#e87ba4", "#0f9b8e", "#a8642a"];
+
+  // שלושת הסטטוסים ההיסטוריים שמורים גם בשדות הישנים (filmed/edited/scheduled) כדי שמידע קיים לא ילך לאיבוד
+  var LEGACY_STATUS_FIELDS = { filmed: true, edited: true, scheduled: true };
+  var DEFAULT_STATUSES = [
+    { id: "filmed", name: "צולם", color: "#fab219" },
+    { id: "edited", name: "נערך", color: "#fab219" },
+    { id: "scheduled", name: "תוזמן", color: "#0ca30c" }
+  ];
+  var DEFAULT_STATUS_NONE = { name: "טרם צולם", color: "#d03b3b" };
+  var DEFAULT_COLOR_SOURCES = { chip: "type", dot: "status" };
 
   var DEFAULT_TYPES = [
     { id: "edu", name: "חינוכי", color: PALETTE[0] },
@@ -404,6 +439,9 @@
     filmed: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 6.5 8.2 4.6h3.6L13 6.5"/><rect x="3" y="6.5" width="14" height="9.5" rx="2"/><circle cx="10" cy="11.2" r="2.8"/></svg>',
     edited: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13.3 3.7l3 3L6 16.5H3v-3L13.3 3.7Z"/></svg>',
     scheduled: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><polyline points="10,6.3 10,10 12.8,11.6"/></svg>',
+    check: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4.5,10.5 8.5,14.5 15.5,5.5"/></svg>',
+    moveUp: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="5.5,12 10,7.5 14.5,12"/></svg>',
+    moveDown: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="5.5,8 10,12.5 14.5,8"/></svg>',
     external: '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 5H5v10h10v-3"/><path d="M11 4h5v5"/><path d="M9.3 10.7 16 4"/></svg>'
   };
 
@@ -467,6 +505,32 @@
     state.activeWeekdays = [true, true, true, true, true, true, true];
   }
 
+  function isHexColor(v) { return typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v); }
+
+  // נרמול הגדרות הסטטוסים והצבעים — תמיד תוספתי, אף פעם לא מוחק פריטי תוכן קיימים
+  (function normalizeStatusSettings() {
+    if (!Array.isArray(state.statuses) || !state.statuses.length) {
+      state.statuses = DEFAULT_STATUSES.map(function (st) { return { id: st.id, name: st.name, color: st.color }; });
+    }
+    state.statuses = state.statuses
+      .filter(function (st) { return st && st.id; })
+      .map(function (st) {
+        return { id: st.id, name: (st.name || "סטטוס").slice(0, 24), color: isHexColor(st.color) ? st.color : STATUS_PALETTE[1] };
+      });
+    if (!state.statusNone || typeof state.statusNone !== "object") state.statusNone = {};
+    if (!state.statusNone.name) state.statusNone.name = DEFAULT_STATUS_NONE.name;
+    if (!isHexColor(state.statusNone.color)) state.statusNone.color = DEFAULT_STATUS_NONE.color;
+    if (!state.colorSources || typeof state.colorSources !== "object") state.colorSources = {};
+    if (state.colorSources.chip !== "type" && state.colorSources.chip !== "status") state.colorSources.chip = DEFAULT_COLOR_SOURCES.chip;
+    if (state.colorSources.dot !== "type" && state.colorSources.dot !== "status") state.colorSources.dot = DEFAULT_COLOR_SOURCES.dot;
+  })();
+
+  // ריל שכבר פורסם באינסטגרם — כל שלבי ההתקדמות מסומנים כהושלמו
+  function markAllStatuses(item) {
+    if (!item.statusFlags || typeof item.statusFlags !== "object") item.statusFlags = {};
+    state.statuses.forEach(function (st) { item.statusFlags[st.id] = true; });
+  }
+
   function mergeIgImport() {
     var importData = window.IG_IMPORT_DATA;
     if (!importData || !Array.isArray(importData.posts)) return;
@@ -495,6 +559,7 @@
         existing.filmed = true;
         existing.edited = true;
         existing.scheduled = true;
+        markAllStatuses(existing);
       } else {
         var firstLine = (post.caption || "").split("\n")[0].trim();
         var title = firstLine ? firstLine.slice(0, 80) : "ריל מאינסטגרם";
@@ -512,6 +577,7 @@
           source: "instagram",
           ig: igFields
         });
+        markAllStatuses(state.items[state.items.length - 1]);
       }
       changed = true;
     });
@@ -531,6 +597,21 @@
       item.filmed = oldReady;
       item.edited = oldScheduled;
       item.scheduled = oldDone;
+      migrated = true;
+    });
+    if (migrated) persist();
+  })();
+
+  // מיגרציה תוספתי: העברת הסימונים הקיימים למפת statusFlags, בלי למחוק את השדות הישנים
+  (function migrateStatusFlags() {
+    var migrated = false;
+    state.items.forEach(function (item) {
+      if (item.statusFlags && typeof item.statusFlags === "object") return;
+      var flags = {};
+      if (item.filmed) flags.filmed = true;
+      if (item.edited) flags.edited = true;
+      if (item.scheduled) flags.scheduled = true;
+      item.statusFlags = flags;
       migrated = true;
     });
     if (migrated) persist();
@@ -693,13 +774,56 @@
     return luma >= 150 ? "#20201c" : "#ffffff";
   }
 
-  var PROGRESS_COLORS = { notStarted: "#d03b3b", inProgress: "#fab219", scheduled: "#0ca30c" };
-
-  function progressColor(item) {
-    if (item.scheduled) return PROGRESS_COLORS.scheduled;
-    if (!item.filmed && !item.edited) return PROGRESS_COLORS.notStarted;
-    return PROGRESS_COLORS.inProgress;
+  // ---------- statuses: reading, writing and the colors they drive ----------
+  function findStatus(id) {
+    for (var i = 0; i < state.statuses.length; i++) if (state.statuses[i].id === id) return state.statuses[i];
+    return null;
   }
+
+  function itemHasStatus(item, statusId) {
+    if (item.statusFlags && Object.prototype.hasOwnProperty.call(item.statusFlags, statusId)) return !!item.statusFlags[statusId];
+    return !!item[statusId];
+  }
+
+  function setItemStatus(item, statusId, value) {
+    if (!item.statusFlags || typeof item.statusFlags !== "object") item.statusFlags = {};
+    item.statusFlags[statusId] = !!value;
+    if (LEGACY_STATUS_FIELDS[statusId]) item[statusId] = !!value;
+  }
+
+  // הסטטוס האחרון בסדר שסומן הוא זה שקובע את הצבע
+  function currentStatus(item) {
+    for (var i = state.statuses.length - 1; i >= 0; i--) {
+      if (itemHasStatus(item, state.statuses[i].id)) return state.statuses[i];
+    }
+    return null;
+  }
+
+  function statusColorFor(item) {
+    var st = currentStatus(item);
+    return st ? st.color : state.statusNone.color;
+  }
+
+  function statusLabelFor(item) {
+    var st = currentStatus(item);
+    return st ? st.name : state.statusNone.name;
+  }
+
+  // "הושלם" = השלב האחרון ברשימה סומן
+  function isItemComplete(item) {
+    var last = state.statuses[state.statuses.length - 1];
+    return last ? itemHasStatus(item, last.id) : false;
+  }
+
+  function colorBySource(item, source) {
+    if (source === "status") return statusColorFor(item);
+    var type = findType(item.typeId);
+    return type ? type.color : null;
+  }
+
+  function chipBgColor(item) { return colorBySource(item, state.colorSources.chip); }
+  function chipDotColor(item) { return colorBySource(item, state.colorSources.dot); }
+  function statusIconFor(statusId) { return ICONS[statusId] || ICONS.check; }
 
   // ---------- drag & drop: reschedule a chip by dragging it to another day ----------
   var chipDrag = null;
@@ -778,7 +902,9 @@
   var statPostsEl = document.getElementById("statPosts");
   var statStoriesEl = document.getElementById("statStories");
   var statDoneEl = document.getElementById("statDone");
+  var statDoneLabelEl = document.getElementById("statDoneLabel");
   var legendEl = document.getElementById("legendRow");
+  var progressLegendEl = document.getElementById("progressLegend");
   var hintEl = document.getElementById("hintText");
   var calendarGridEl = document.getElementById("calendarGrid");
 
@@ -798,6 +924,9 @@
   var settingsSummaryEl = document.getElementById("settingsSummary");
   var weekdayPickerEl = document.getElementById("weekdayPicker");
   var addTypeBtn = document.getElementById("addTypeBtn");
+  var statusListEl = document.getElementById("statusList");
+  var addStatusBtn = document.getElementById("addStatusBtn");
+  var colorSourceRowsEl = document.getElementById("colorSourceRows");
 
   // ---------- modal state ----------
   var dayModal = { dateKey: null, mode: "list", editingId: null };
@@ -848,6 +977,8 @@
     lockScroll();
     renderWeekdayPicker();
     renderSettingsList();
+    renderStatusList();
+    renderColorSources();
   }
   function closeSettingsModal() {
     settingsModalOverlay.classList.remove("is-open");
@@ -889,17 +1020,22 @@
     dayModalBodyEl.appendChild(addBtn);
   }
 
-  function buildStatusToggle(item, field, icon, activeLabel, inactiveLabel, onChange) {
+  function buildStatusToggle(item, status, onChange) {
     var btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "icon-btn small" + (item[field] ? " is-active" : "");
-    var label = item[field] ? activeLabel : inactiveLabel;
+    var on = itemHasStatus(item, status.id);
+    btn.className = "icon-btn small status-toggle-btn" + (on ? " is-active" : "");
+    var label = on ? "בטל סימון " + status.name : "סמן כ" + status.name;
     btn.setAttribute("aria-label", label);
     btn.title = label;
-    btn.innerHTML = icon;
+    btn.innerHTML = statusIconFor(status.id);
+    if (on) {
+      btn.style.background = status.color;
+      btn.style.color = textColorForBg(status.color);
+    }
     btn.addEventListener("click", function (e) {
       e.stopPropagation();
-      item[field] = !item[field];
+      setItemStatus(item, status.id, !itemHasStatus(item, status.id));
       persist();
       onChange();
     });
@@ -966,7 +1102,7 @@
     if (item.source === "instagram") return buildIgDayItemRow(item);
     var type = findType(item.typeId);
     var row = document.createElement("div");
-    row.className = "day-item-row" + (item.scheduled ? " is-scheduled" : "");
+    row.className = "day-item-row" + (isItemComplete(item) ? " is-scheduled" : "");
 
     var main = document.createElement("button");
     main.type = "button";
@@ -975,7 +1111,8 @@
 
     var dot = document.createElement("span");
     dot.className = "dot";
-    dot.style.background = type ? type.color : "var(--ink-400)";
+    dot.style.background = chipDotColor(item) || "var(--ink-400)";
+    dot.title = state.colorSources.dot === "status" ? statusLabelFor(item) : (type ? type.name : "ללא סיווג");
 
     var icon = document.createElement("span");
     icon.className = "fmt-icon";
@@ -1009,14 +1146,10 @@
       renderHeader();
       renderCalendar();
     }
-    var filmedBtn = buildStatusToggle(item, "filmed", ICONS.filmed, "בטל סימון צולם", "סמן כצולם", refreshAfterToggle);
-    var editedBtn = buildStatusToggle(item, "edited", ICONS.edited, "בטל סימון נערך", "סמן כנערך", refreshAfterToggle);
-    var scheduledBtn = buildStatusToggle(item, "scheduled", ICONS.scheduled, "בטל סימון תוזמן", "סמן כתוזמן", refreshAfterToggle);
-
     row.appendChild(main);
-    row.appendChild(filmedBtn);
-    row.appendChild(editedBtn);
-    row.appendChild(scheduledBtn);
+    state.statuses.forEach(function (st) {
+      row.appendChild(buildStatusToggle(item, st, refreshAfterToggle));
+    });
     return row;
   }
 
@@ -1382,35 +1515,31 @@
     statusLabel.className = "field-label";
     statusLabel.textContent = "סטטוס";
 
-    var filmedRow = document.createElement("label");
-    filmedRow.className = "checkbox-row";
-    var filmedInput = document.createElement("input");
-    filmedInput.type = "checkbox";
-    filmedInput.checked = editing ? !!editing.filmed : false;
-    var filmedText = document.createElement("span");
-    filmedText.textContent = "צולם";
-    filmedRow.appendChild(filmedInput);
-    filmedRow.appendChild(filmedText);
-
-    var editedRow = document.createElement("label");
-    editedRow.className = "checkbox-row";
-    var editedInput = document.createElement("input");
-    editedInput.type = "checkbox";
-    editedInput.checked = editing ? !!editing.edited : false;
-    var editedText = document.createElement("span");
-    editedText.textContent = "נערך";
-    editedRow.appendChild(editedInput);
-    editedRow.appendChild(editedText);
-
-    var scheduledRow = document.createElement("label");
-    scheduledRow.className = "checkbox-row";
-    var scheduledInput = document.createElement("input");
-    scheduledInput.type = "checkbox";
-    scheduledInput.checked = editing ? !!editing.scheduled : false;
-    var scheduledText = document.createElement("span");
-    scheduledText.textContent = "תוזמן";
-    scheduledRow.appendChild(scheduledInput);
-    scheduledRow.appendChild(scheduledText);
+    var statusRowsWrap = document.createElement("div");
+    var statusInputs = [];
+    state.statuses.forEach(function (st) {
+      var row = document.createElement("label");
+      row.className = "checkbox-row";
+      var input = document.createElement("input");
+      input.type = "checkbox";
+      input.checked = editing ? itemHasStatus(editing, st.id) : false;
+      var dot = document.createElement("span");
+      dot.className = "dot";
+      dot.style.background = st.color;
+      var text = document.createElement("span");
+      text.textContent = st.name;
+      row.appendChild(input);
+      row.appendChild(dot);
+      row.appendChild(text);
+      statusRowsWrap.appendChild(row);
+      statusInputs.push({ status: st, input: input });
+    });
+    if (!state.statuses.length) {
+      var emptyStatuses = document.createElement("p");
+      emptyStatuses.className = "field-hint";
+      emptyStatuses.textContent = "לא הוגדרו סטטוסים — אפשר להוסיף אותם בהגדרות הלוח.";
+      statusRowsWrap.appendChild(emptyStatuses);
+    }
 
     var scheduleHelper = document.createElement("div");
     scheduleHelper.className = "schedule-helper";
@@ -1503,6 +1632,7 @@
         return;
       }
       var newDate = dateInput.value || key;
+      var target;
       if (editing) {
         editing.title = title;
         editing.date = newDate;
@@ -1510,11 +1640,9 @@
         editing.typeId = currentTypeId;
         editing.note = noteInput.value.trim();
         editing.caption = captionInput.value.trim();
-        editing.filmed = filmedInput.checked;
-        editing.edited = editedInput.checked;
-        editing.scheduled = scheduledInput.checked;
+        target = editing;
       } else {
-        state.items.push({
+        target = {
           id: uid(),
           date: newDate,
           title: title,
@@ -1522,12 +1650,12 @@
           typeId: currentTypeId,
           note: noteInput.value.trim(),
           caption: captionInput.value.trim(),
-          filmed: filmedInput.checked,
-          edited: editedInput.checked,
-          scheduled: scheduledInput.checked,
+          statusFlags: {},
           createdAt: Date.now()
-        });
+        };
+        state.items.push(target);
       }
+      statusInputs.forEach(function (si) { setItemStatus(target, si.status.id, si.input.checked); });
       persist();
       dayModal.dateKey = newDate;
       dayModal.mode = "list";
@@ -1557,9 +1685,7 @@
     form.appendChild(typeWrap);
     form.appendChild(newTypeRow);
     form.appendChild(statusLabel);
-    form.appendChild(filmedRow);
-    form.appendChild(editedRow);
-    form.appendChild(scheduledRow);
+    form.appendChild(statusRowsWrap);
     form.appendChild(scheduleHelper);
     form.appendChild(actions);
     dayModalBodyEl.appendChild(form);
@@ -1580,8 +1706,7 @@
       colorInput.addEventListener("input", function () {
         t.color = colorInput.value;
         persist();
-        renderHeader();
-        renderCalendar();
+        refreshColors();
       });
 
       var nameInput = document.createElement("input");
@@ -1594,8 +1719,7 @@
         t.name = v || t.name;
         nameInput.value = t.name;
         persist();
-        renderHeader();
-        renderCalendar();
+        refreshColors();
       });
 
       var quotaInput = document.createElement("input");
@@ -1644,6 +1768,173 @@
     renderSettingsSummary();
   }
 
+  // refresh everything that can be tinted by a status/type color change
+  function refreshColors() {
+    renderHeader();
+    renderCalendar();
+    if (dayModalOverlay.classList.contains("is-open") && dayModal.mode === "list") renderDayList();
+  }
+
+  function renderStatusList() {
+    statusListEl.innerHTML = "";
+
+    // the "nothing marked yet" baseline — a color and a name, but never deletable
+    var baseRow = document.createElement("div");
+    baseRow.className = "settings-row";
+    var baseColor = document.createElement("input");
+    baseColor.type = "color";
+    baseColor.className = "color-input";
+    baseColor.value = state.statusNone.color;
+    baseColor.setAttribute("aria-label", "צבע לפני שסומן שלב כלשהו");
+    baseColor.addEventListener("input", function () {
+      state.statusNone.color = baseColor.value;
+      persist();
+      refreshColors();
+    });
+    var baseName = document.createElement("input");
+    baseName.type = "text";
+    baseName.className = "text-input";
+    baseName.maxLength = 24;
+    baseName.value = state.statusNone.name;
+    baseName.addEventListener("change", function () {
+      state.statusNone.name = baseName.value.trim() || state.statusNone.name;
+      baseName.value = state.statusNone.name;
+      persist();
+      refreshColors();
+    });
+    var baseTag = document.createElement("span");
+    baseTag.className = "settings-row-spacer settings-row-base-tag";
+    baseTag.textContent = "מצב התחלה";
+    baseRow.appendChild(baseColor);
+    baseRow.appendChild(baseName);
+    baseRow.appendChild(baseTag);
+    statusListEl.appendChild(baseRow);
+
+    state.statuses.forEach(function (st, idx) {
+      var row = document.createElement("div");
+      row.className = "settings-row";
+
+      var colorInput = document.createElement("input");
+      colorInput.type = "color";
+      colorInput.className = "color-input";
+      colorInput.value = st.color;
+      colorInput.setAttribute("aria-label", "צבע עבור " + st.name);
+      colorInput.addEventListener("input", function () {
+        st.color = colorInput.value;
+        persist();
+        refreshColors();
+      });
+
+      var nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.className = "text-input";
+      nameInput.maxLength = 24;
+      nameInput.value = st.name;
+      nameInput.setAttribute("data-status-name", st.id);
+      nameInput.addEventListener("change", function () {
+        st.name = nameInput.value.trim() || st.name;
+        nameInput.value = st.name;
+        persist();
+        refreshColors();
+      });
+
+      function moveStatus(delta) {
+        var target = idx + delta;
+        if (target < 0 || target >= state.statuses.length) return;
+        var moved = state.statuses.splice(idx, 1)[0];
+        state.statuses.splice(target, 0, moved);
+        persist();
+        renderStatusList();
+        refreshColors();
+      }
+
+      var upBtn = document.createElement("button");
+      upBtn.type = "button";
+      upBtn.className = "icon-btn small";
+      upBtn.innerHTML = ICONS.moveUp;
+      upBtn.title = "העברה שלב אחד אחורה";
+      upBtn.setAttribute("aria-label", "העברת " + st.name + " שלב אחד אחורה");
+      upBtn.disabled = idx === 0;
+      upBtn.style.opacity = idx === 0 ? "0.35" : "";
+      upBtn.addEventListener("click", function () { moveStatus(-1); });
+
+      var downBtn = document.createElement("button");
+      downBtn.type = "button";
+      downBtn.className = "icon-btn small";
+      downBtn.innerHTML = ICONS.moveDown;
+      downBtn.title = "העברה שלב אחד קדימה";
+      downBtn.setAttribute("aria-label", "העברת " + st.name + " שלב אחד קדימה");
+      downBtn.disabled = idx === state.statuses.length - 1;
+      downBtn.style.opacity = idx === state.statuses.length - 1 ? "0.35" : "";
+      downBtn.addEventListener("click", function () { moveStatus(1); });
+
+      var delBtn = document.createElement("button");
+      delBtn.type = "button";
+      delBtn.className = "icon-btn small danger";
+      delBtn.innerHTML = ICONS.trash;
+      delBtn.setAttribute("aria-label", "מחיקת הסטטוס " + st.name);
+      delBtn.title = "מחיקת סטטוס";
+      delBtn.addEventListener("click", function () {
+        if (delBtn.classList.contains("confirm")) {
+          // הסימונים נשארים על הפריטים עצמם — רק השלב יורד מהתצוגה
+          state.statuses = state.statuses.filter(function (x) { return x.id !== st.id; });
+          persist();
+          renderStatusList();
+          refreshColors();
+        } else {
+          delBtn.classList.add("confirm");
+          setTimeout(function () { delBtn.classList.remove("confirm"); }, 3000);
+        }
+      });
+
+      row.appendChild(colorInput);
+      row.appendChild(nameInput);
+      row.appendChild(upBtn);
+      row.appendChild(downBtn);
+      row.appendChild(delBtn);
+      statusListEl.appendChild(row);
+    });
+  }
+
+  var COLOR_SOURCE_TARGETS = [
+    { key: "chip", label: "צבע המלבן של פיסת התוכן" },
+    { key: "dot", label: "העיגול הקטן שבתוך המלבן" }
+  ];
+  var COLOR_SOURCE_OPTIONS = [
+    { value: "type", label: "סוג תוכן" },
+    { value: "status", label: "סטטוס" }
+  ];
+
+  function renderColorSources() {
+    colorSourceRowsEl.innerHTML = "";
+    COLOR_SOURCE_TARGETS.forEach(function (target) {
+      var row = document.createElement("div");
+      row.className = "color-source-row";
+      var name = document.createElement("span");
+      name.className = "color-source-name";
+      name.textContent = target.label;
+      var seg = document.createElement("div");
+      seg.className = "color-source-seg";
+      COLOR_SOURCE_OPTIONS.forEach(function (opt) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = state.colorSources[target.key] === opt.value ? "is-active" : "";
+        btn.textContent = opt.label;
+        btn.setAttribute("aria-pressed", state.colorSources[target.key] === opt.value ? "true" : "false");
+        btn.addEventListener("click", function () {
+          state.colorSources[target.key] = opt.value;
+          persist();
+          renderColorSources();
+          refreshColors();
+        });
+        seg.appendChild(btn);
+      });
+      row.appendChild(name);
+      row.appendChild(seg);
+      colorSourceRowsEl.appendChild(row);
+    });
+  }
+
   function renderSettingsSummary() {
     var total = state.types.reduce(function (s, t) { return s + (t.weeklyTarget || 0); }, 0);
     var activeDays = getActiveWeekdaySet().size;
@@ -1663,12 +1954,14 @@
     });
     var posts = monthItems.filter(function (it) { return it.format === "post"; }).length;
     var stories = monthItems.filter(function (it) { return it.format === "story"; }).length;
-    var done = monthItems.filter(function (it) { return it.scheduled; }).length;
+    var done = monthItems.filter(isItemComplete).length;
 
     statTotalEl.textContent = monthItems.length;
     statPostsEl.textContent = posts;
     statStoriesEl.textContent = stories;
     statDoneEl.textContent = done + "/" + monthItems.length;
+    var lastStatus = state.statuses[state.statuses.length - 1];
+    statDoneLabelEl.textContent = lastStatus ? lastStatus.name : "הושלמו";
 
     legendEl.innerHTML = "";
     state.types.forEach(function (t) {
@@ -1686,9 +1979,23 @@
     var manage = document.createElement("button");
     manage.type = "button";
     manage.className = "legend-manage";
-    manage.innerHTML = ICONS.plus + "<span>ניהול סוגים</span>";
+    manage.innerHTML = ICONS.plus + "<span>הגדרות</span>";
     manage.addEventListener("click", openSettingsModal);
     legendEl.appendChild(manage);
+
+    progressLegendEl.innerHTML = "";
+    [{ name: state.statusNone.name, color: state.statusNone.color }].concat(state.statuses).forEach(function (st) {
+      var el = document.createElement("span");
+      el.className = "legend-item";
+      var dot = document.createElement("span");
+      dot.className = "dot";
+      dot.style.background = st.color;
+      var name = document.createElement("span");
+      name.textContent = st.name;
+      el.appendChild(dot);
+      el.appendChild(name);
+      progressLegendEl.appendChild(el);
+    });
 
     hintEl.style.display = state.items.length === 0 ? "block" : "none";
   }
@@ -1727,17 +2034,18 @@
     var type = findType(item.typeId);
     var chip = document.createElement("button");
     chip.type = "button";
-    chip.className = "chip chip-draggable" + (item.scheduled ? " is-scheduled" : "");
+    chip.className = "chip chip-draggable" + (isItemComplete(item) ? " is-scheduled" : "");
     var textColor = null;
-    if (type) {
-      textColor = textColorForBg(type.color);
-      chip.style.background = type.color;
+    var bg = chipBgColor(item);
+    if (bg) {
+      textColor = textColorForBg(bg);
+      chip.style.background = bg;
       chip.style.borderColor = "transparent";
       chip.style.color = textColor;
     }
     var pdot = document.createElement("span");
     pdot.className = "progress-dot";
-    pdot.style.background = progressColor(item);
+    pdot.style.background = chipDotColor(item) || "var(--ink-400)";
     var icon = document.createElement("span");
     icon.className = "fmt-icon";
     icon.innerHTML = item.format === "story" ? ICONS.story : ICONS.post;
@@ -1748,11 +2056,8 @@
     chip.appendChild(pdot);
     chip.appendChild(icon);
     chip.appendChild(title);
-    var statusBits = [];
-    if (item.filmed) statusBits.push("צולם");
-    if (item.edited) statusBits.push("נערך");
-    if (item.scheduled) statusBits.push("תוזמן");
-    chip.title = (type ? type.name : "ללא סיווג") + " · " + (item.format === "story" ? "סטורי" : "פוסט") + " · " + (statusBits.length ? statusBits.join(" · ") : "טרם צולם");
+    var statusBits = state.statuses.filter(function (st) { return itemHasStatus(item, st.id); }).map(function (st) { return st.name; });
+    chip.title = (type ? type.name : "ללא סיווג") + " · " + (item.format === "story" ? "סטורי" : "פוסט") + " · " + (statusBits.length ? statusBits.join(" · ") : state.statusNone.name);
     chip.addEventListener("click", function (e) {
       if (suppressNextChipClick) { suppressNextChipClick = false; return; }
       e.stopPropagation();
@@ -1860,6 +2165,15 @@
     persist();
     renderSettingsList();
     renderHeader();
+  });
+  addStatusBtn.addEventListener("click", function () {
+    var st = { id: uid(), name: "סטטוס חדש", color: STATUS_PALETTE[state.statuses.length % STATUS_PALETTE.length] };
+    state.statuses.push(st);
+    persist();
+    renderStatusList();
+    refreshColors();
+    var field = statusListEl.querySelector('[data-status-name="' + st.id + '"]');
+    if (field) { field.focus(); field.select(); }
   });
   dayModalCloseBtn.addEventListener("click", closeDayModal);
   settingsModalCloseBtn.addEventListener("click", closeSettingsModal);
