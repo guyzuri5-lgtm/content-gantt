@@ -50,3 +50,12 @@ create policy "update own board" on public.boards for update using (auth.uid() =
 
 ## דיפלוי
 מתארח ב-Vercel כאתר סטטי.
+
+## `ig-report/` — הדאשבורד שמזין את הלוח
+תת-פרויקט נפרד: מושך את נתוני הרילז והתובנות מאינסטגרם ומייצר דוח HTML עצמאי.
+הרילז המוטמעים ב-`index.html` (הבלוק `IG_IMPORT_DATA`) מגיעים ממנו — כרגע בהעתקה ידנית ולא אוטומטית.
+
+הרצה: `cd ig-report && npm install && npm run report` (דורש `.env` עם `COMPOSIO_API_KEY` ו-`ANTHROPIC_API_KEY`).
+פירוט מלא ב-[ig-report/README.md](ig-report/README.md).
+
+**לא נשמרים בריפו:** `.env`, `node_modules/`, `data.json`, `thumbs/`, `report.html`.

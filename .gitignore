@@ -3,3 +3,10 @@
 
 # macOS
 .DS_Store
+
+# ig-report — סודות וקבצים נוצרים, אסור שיגיעו לריפו הפומבי
+ig-report/.env
+ig-report/node_modules/
+ig-report/data.json
+ig-report/thumbs/
+ig-report/report.html

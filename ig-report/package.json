@@ -1,0 +1,22 @@
+{
+  "name": "ig-reels-report",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Personal Instagram Reels analytics report — pulls last 14 days of Reels via Composio + Claude Agent SDK and renders a self-contained HTML report.",
+  "scripts": {
+    "agent": "tsx agent.ts",
+    "render": "tsx render.ts",
+    "report": "tsx agent.ts && tsx render.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "latest",
+    "@composio/core": "latest",
+    "dotenv": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
