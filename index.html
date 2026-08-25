@@ -78,6 +78,22 @@
   .title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .brand { display: flex; align-items: center; gap: 9px; }
   .title-actions { display: flex; align-items: center; gap: 4px; }
+  .auth-gate { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; background: var(--paper); }
+  .auth-gate.is-open { display: flex; }
+  .auth-card { width: 100%; max-width: 380px; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 16px; padding: 28px 24px; }
+  .auth-card h2 { margin: 0 0 6px; font-size: 1.15rem; color: var(--ink-900); }
+  .auth-card p { margin: 0 0 18px; font-size: 0.84rem; color: var(--ink-500); line-height: 1.55; }
+  .auth-card .text-input { width: 100%; }
+  .auth-card .text-input + .text-input { margin-top: 8px; }
+  .auth-actions { display: flex; gap: 8px; margin-top: 14px; }
+  .auth-actions .btn { flex: 1; }
+  .auth-msg { margin: 14px 0 0; font-size: 0.8rem; line-height: 1.5; display: none; }
+  .auth-msg.is-visible { display: block; }
+  .auth-msg.is-error { color: var(--danger); }
+  .auth-busy { display: flex; align-items: center; gap: 8px; font-size: 0.86rem; color: var(--ink-500); }
+  .sync-label { font-size: 0.72rem; font-weight: 700; color: var(--ink-400); white-space: nowrap; }
+  .sync-label.is-saved { color: #0ca30c; }
+  .sync-label.is-error { color: var(--danger); }
   .cloud-prompt { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
   .cloud-prompt.is-visible { display: flex; }
   .cloud-prompt-text { flex: 1; min-width: 200px; font-size: 0.8rem; color: var(--ink-600); line-height: 1.5; }
@@ -316,6 +332,15 @@
 </head>
 <body>
 
+<div class="auth-gate" id="authGate">
+  <div class="auth-card">
+    <h2 id="authTitle">גאנט תוכן</h2>
+    <p id="authIntro">מתחברים פעם אחת בכל מכשיר. מרגע זה כל שינוי נשמר בענן אוטומטית, וניקוי הדפדפן לא מוחק כלום.</p>
+    <div id="authBody"></div>
+    <p class="auth-msg" id="authMsg"></p>
+  </div>
+</div>
+
 <div class="app" dir="rtl" lang="he">
   <header class="app-header">
     <div class="title-row">
@@ -329,6 +354,7 @@
         <h1>גאנט תוכן</h1>
       </div>
       <div class="title-actions">
+        <span class="sync-label" id="syncLabel"></span>
       <button type="button" id="openSyncBtn" class="icon-btn has-dot" aria-label="סנכרון וגיבוי" title="סנכרון וגיבוי">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M6 15.5a3.5 3.5 0 0 1-.4-6.98 4.5 4.5 0 0 1 8.68-1.4A3.3 3.3 0 0 1 14.8 15.5H6Z"/></svg>
         <span class="sync-dot" id="syncDot" aria-hidden="true"></span>
@@ -360,7 +386,6 @@
     <div class="legend-row" id="legendRow"></div>
     <p class="progress-legend" id="progressLegend"></p>
     <p class="hint" id="hintText">טיפ: לחצו על כל יום בלוח כדי לשבץ בו תוכן חדש.</p>
-    <div class="cloud-prompt" id="cloudPrompt"></div>
   </header>
 
   <div class="calendar-wrap">
@@ -1143,7 +1168,8 @@
     }
     if (openSyncBtn) openSyncBtn.title = "סנכרון וגיבוי — " + (cloud.message || CLOUD_STATUS_TEXT[status] || "");
     if (syncModalOverlay.classList.contains("is-open")) renderSyncModal();
-    renderCloudPrompt();
+    updateSyncLabel();
+    renderAuthGate();
   }
 
   function setIgStatus(status, message, count) {
@@ -1156,7 +1182,7 @@
   function scheduleCloudPush() {
     if (!cloud.client || !cloud.user || !cloud.pulledOnce) return;
     clearTimeout(cloud.pushTimer);
-    cloud.pushTimer = setTimeout(pushToCloud, 900);
+    cloud.pushTimer = setTimeout(pushToCloud, 350);
   }
 
   function pushToCloud() {
@@ -1303,23 +1329,113 @@
     document.head.appendChild(script);
   }
 
-  // שורת ההנחיה שמופיעה כשהלוח לא מחובר לחשבון — בלעדיה אין שום רמז שקיים סנכרון
-  function renderCloudPrompt() {
-    if (!cloudPromptEl) return;
-    var show = cloud.configured && !cloud.user && cloud.status !== "loading";
-    cloudPromptEl.classList.toggle("is-visible", show);
-    if (!show) { cloudPromptEl.innerHTML = ""; return; }
-    cloudPromptEl.innerHTML = "";
-    var text = document.createElement("span");
-    text.className = "cloud-prompt-text";
-    text.textContent = "הלוח הזה לא מחובר לחשבון. התחברו כדי לשמור את התוכן בענן ולראות אותו מכל מכשיר — או שחזרו מקובץ גיבוי.";
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn btn-primary btn-small";
-    btn.textContent = "התחברות וסנכרון";
-    btn.addEventListener("click", openSyncModal);
-    cloudPromptEl.appendChild(text);
-    cloudPromptEl.appendChild(btn);
+  // ---------- שער התחברות ----------
+  // הלוח לא נפתח לעריכה לפני שיש חשבון מחובר ומשיכה ראשונה מהענן.
+  // זו ההגנה המרכזית: אי אפשר להזין תוכן שנשמר רק בדפדפן ואובד בניקוי קאש.
+  function authMessage(text, isError) {
+    if (!authMsgEl) return;
+    authMsgEl.textContent = text || "";
+    authMsgEl.classList.toggle("is-visible", !!text);
+    authMsgEl.classList.toggle("is-error", !!isError);
+  }
+
+  function updateSyncLabel() {
+    if (!syncLabelEl) return;
+    var text = "", cls = "sync-label";
+    if (!cloud.configured) { text = ""; }
+    else if (!cloud.user) { text = "לא מחובר"; cls += " is-error"; }
+    else if (cloud.status === "error") { text = "שגיאת שמירה"; cls += " is-error"; }
+    else if (cloud.status === "working" || cloud.pushing) { text = "שומר…"; }
+    else if (cloud.status === "synced") { text = "נשמר"; cls += " is-saved"; }
+    syncLabelEl.textContent = text;
+    syncLabelEl.className = cls;
+  }
+
+  function renderAuthGate() {
+    if (!authGateEl) return;
+    var needsGate = cloud.configured && (!cloud.user || !cloud.pulledOnce);
+    authGateEl.classList.toggle("is-open", needsGate);
+    if (!needsGate) { authBodyEl.innerHTML = ""; return; }
+
+    // מחובר אבל עוד לא נמשך — מסך המתנה, בלי טופס
+    if (cloud.user || cloud.status === "loading") {
+      authBodyEl.innerHTML = "";
+      var busy = document.createElement("div");
+      busy.className = "auth-busy";
+      busy.textContent = cloud.user ? "טוען את הלוח שלך מהענן…" : "מתחבר…";
+      authBodyEl.appendChild(busy);
+      if (cloud.status !== "error") authMessage("");
+      return;
+    }
+
+    if (authBodyEl.querySelector("input")) return;   // לא לדרוס הקלדה באמצע
+    authBodyEl.innerHTML = "";
+    authIntroEl.textContent = "מתחברים פעם אחת בכל מכשיר. מרגע זה כל שינוי נשמר בענן אוטומטית, וניקוי הדפדפן לא מוחק כלום.";
+
+    var emailInput = document.createElement("input");
+    emailInput.type = "email";
+    emailInput.className = "text-input";
+    emailInput.placeholder = "you@example.com";
+    emailInput.dir = "ltr";
+    emailInput.autocomplete = "username";
+
+    var passInput = document.createElement("input");
+    passInput.type = "password";
+    passInput.className = "text-input";
+    passInput.placeholder = "סיסמה (לפחות 6 תווים)";
+    passInput.dir = "ltr";
+    passInput.autocomplete = "current-password";
+
+    var actions = document.createElement("div");
+    actions.className = "auth-actions";
+    var signInBtn = document.createElement("button");
+    signInBtn.type = "button";
+    signInBtn.className = "btn btn-primary";
+    signInBtn.textContent = "התחברות";
+    var signUpBtn = document.createElement("button");
+    signUpBtn.type = "button";
+    signUpBtn.className = "btn btn-ghost";
+    signUpBtn.textContent = "יצירת חשבון";
+
+    function attempt(mode, btn, label) {
+      var email = emailInput.value.trim();
+      var pass = passInput.value;
+      if (!email || email.indexOf("@") < 0) { authMessage("צריך כתובת מייל תקינה.", true); emailInput.focus(); return; }
+      if (!pass || pass.length < 6) { authMessage("הסיסמה צריכה להיות באורך 6 תווים לפחות.", true); passInput.focus(); return; }
+      btn.disabled = true; signInBtn.disabled = true; signUpBtn.disabled = true;
+      btn.textContent = "רגע…";
+      authMessage("");
+      var call = mode === "signup"
+        ? cloud.client.auth.signUp({ email: email, password: pass })
+        : cloud.client.auth.signInWithPassword({ email: email, password: pass });
+      call.then(function (res) {
+        btn.disabled = false; signInBtn.disabled = false; signUpBtn.disabled = false;
+        btn.textContent = label;
+        if (res && res.error) {
+          authMessage((mode === "signup" ? "יצירת החשבון נכשלה: " : "ההתחברות נכשלה: ") + res.error.message, true);
+          return;
+        }
+        // חשבון נוצר בלי סשן = אימות מייל דלוק. חייבים לומר את זה במפורש ולא להמשיך.
+        if (res && res.data && res.data.user && !res.data.session) {
+          authMessage("החשבון נוצר אבל ההתחברות לא הושלמה, כי ב-Supabase דלוק אימות מייל. כבו את Confirm email תחת Authentication → Sign In / Providers → Email, ואז התחברו. עד אז הלוח לא ייפתח — כדי שלא תזינו תוכן שלא נשמר בשום מקום.", true);
+        }
+      }, function (e) {
+        btn.disabled = false; signInBtn.disabled = false; signUpBtn.disabled = false;
+        btn.textContent = label;
+        authMessage("ההתחברות נכשלה: " + (e && e.message ? e.message : "שגיאה לא ידועה"), true);
+      });
+    }
+
+    signInBtn.addEventListener("click", function () { attempt("signin", signInBtn, "התחברות"); });
+    signUpBtn.addEventListener("click", function () { attempt("signup", signUpBtn, "יצירת חשבון"); });
+    passInput.addEventListener("keydown", function (e) { if (e.key === "Enter") attempt("signin", signInBtn, "התחברות"); });
+
+    actions.appendChild(signInBtn);
+    actions.appendChild(signUpBtn);
+    authBodyEl.appendChild(emailInput);
+    authBodyEl.appendChild(passInput);
+    authBodyEl.appendChild(actions);
+    emailInput.focus();
   }
 
   // ---------- sync modal ----------
@@ -1378,20 +1494,15 @@
 
       var igActions = document.createElement("div");
       igActions.className = "backup-actions";
-      var igUploadBtn = document.createElement("button");
-      igUploadBtn.type = "button";
-      igUploadBtn.className = "btn btn-primary";
-      igUploadBtn.textContent = "העלאת נתוני הרילז לענן";
-      igUploadBtn.disabled = cloud.igStatus === "uploading";
-      igUploadBtn.addEventListener("click", uploadIgToCloud);
-      var igCheckBtn = document.createElement("button");
-      igCheckBtn.type = "button";
-      igCheckBtn.className = "btn btn-ghost";
-      igCheckBtn.textContent = "בדיקה מחדש";
-      igCheckBtn.addEventListener("click", function () { syncIgFromCloud(false); });
-      igActions.appendChild(igUploadBtn);
-      igActions.appendChild(igCheckBtn);
-      igBox.appendChild(igActions);
+      if (cloud.igStatus === "error" || cloud.igStatus === "missing") {
+        var igRetryBtn = document.createElement("button");
+        igRetryBtn.type = "button";
+        igRetryBtn.className = "btn btn-ghost";
+        igRetryBtn.textContent = "ניסיון חוזר";
+        igRetryBtn.addEventListener("click", function () { syncIgFromCloud(true); });
+        igActions.appendChild(igRetryBtn);
+        igBox.appendChild(igActions);
+      }
       syncCloudBodyEl.appendChild(igBox);
 
       var actions = document.createElement("div");
@@ -1516,7 +1627,11 @@
   var legendEl = document.getElementById("legendRow");
   var progressLegendEl = document.getElementById("progressLegend");
   var hintEl = document.getElementById("hintText");
-  var cloudPromptEl = document.getElementById("cloudPrompt");
+  var authGateEl = document.getElementById("authGate");
+  var authBodyEl = document.getElementById("authBody");
+  var authMsgEl = document.getElementById("authMsg");
+  var authIntroEl = document.getElementById("authIntro");
+  var syncLabelEl = document.getElementById("syncLabel");
   var calendarGridEl = document.getElementById("calendarGrid");
 
   var prevMonthBtn = document.getElementById("prevMonthBtn");
@@ -2618,7 +2733,7 @@
     });
 
     hintEl.style.display = state.items.length === 0 ? "block" : "none";
-    renderCloudPrompt();
+    updateSyncLabel();
   }
 
   function buildIgChip(item) {
@@ -2829,6 +2944,7 @@
     }
   })();
 
+  renderAuthGate();
   renderHeader();
   renderCalendar();
   initCloud();
