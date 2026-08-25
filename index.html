@@ -77,6 +77,10 @@
   .app-header { margin-bottom: 18px; }
   .title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .brand { display: flex; align-items: center; gap: 9px; }
+  .title-actions { display: flex; align-items: center; gap: 4px; }
+  .cloud-prompt { display: none; align-items: center; gap: 10px; flex-wrap: wrap; margin: 10px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .cloud-prompt.is-visible { display: flex; }
+  .cloud-prompt-text { flex: 1; min-width: 200px; font-size: 0.8rem; color: var(--ink-600); line-height: 1.5; }
   .brand-mark { width: 30px; height: 22px; flex: none; }
   .brand h1 { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.01em; text-wrap: balance; }
 
@@ -324,6 +328,7 @@
         </span>
         <h1>גאנט תוכן</h1>
       </div>
+      <div class="title-actions">
       <button type="button" id="openSyncBtn" class="icon-btn has-dot" aria-label="סנכרון וגיבוי" title="סנכרון וגיבוי">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M6 15.5a3.5 3.5 0 0 1-.4-6.98 4.5 4.5 0 0 1 8.68-1.4A3.3 3.3 0 0 1 14.8 15.5H6Z"/></svg>
         <span class="sync-dot" id="syncDot" aria-hidden="true"></span>
@@ -331,6 +336,7 @@
       <button type="button" id="openSettingsBtn" class="icon-btn" aria-label="הגדרות הלוח" title="הגדרות הלוח">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"><path d="M11 3H4v7l8.5 8.5a1.5 1.5 0 0 0 2.12 0l4.38-4.38a1.5 1.5 0 0 0 0-2.12L11 3Z"/><circle cx="7.3" cy="7.3" r="1.1" fill="currentColor" stroke="none"/></svg>
       </button>
+      </div>
     </div>
 
     <div class="month-nav">
@@ -354,6 +360,7 @@
     <div class="legend-row" id="legendRow"></div>
     <p class="progress-legend" id="progressLegend"></p>
     <p class="hint" id="hintText">טיפ: לחצו על כל יום בלוח כדי לשבץ בו תוכן חדש.</p>
+    <div class="cloud-prompt" id="cloudPrompt"></div>
   </header>
 
   <div class="calendar-wrap">
@@ -1131,6 +1138,7 @@
     }
     if (openSyncBtn) openSyncBtn.title = "סנכרון וגיבוי — " + (cloud.message || CLOUD_STATUS_TEXT[status] || "");
     if (syncModalOverlay.classList.contains("is-open")) renderSyncModal();
+    renderCloudPrompt();
   }
 
   function scheduleCloudPush() {
@@ -1220,6 +1228,25 @@
       setCloudStatus("error", "טעינת ספריית הסנכרון נכשלה — הלוח ממשיך לעבוד מקומית, והנתונים נשמרים בדפדפן.");
     };
     document.head.appendChild(script);
+  }
+
+  // שורת ההנחיה שמופיעה כשהלוח לא מחובר לחשבון — בלעדיה אין שום רמז שקיים סנכרון
+  function renderCloudPrompt() {
+    if (!cloudPromptEl) return;
+    var show = cloud.configured && !cloud.user && cloud.status !== "loading";
+    cloudPromptEl.classList.toggle("is-visible", show);
+    if (!show) { cloudPromptEl.innerHTML = ""; return; }
+    cloudPromptEl.innerHTML = "";
+    var text = document.createElement("span");
+    text.className = "cloud-prompt-text";
+    text.textContent = "הלוח הזה לא מחובר לחשבון. התחברו כדי לשמור את התוכן בענן ולראות אותו מכל מכשיר — או שחזרו מקובץ גיבוי.";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn btn-primary btn-small";
+    btn.textContent = "התחברות וסנכרון";
+    btn.addEventListener("click", openSyncModal);
+    cloudPromptEl.appendChild(text);
+    cloudPromptEl.appendChild(btn);
   }
 
   // ---------- sync modal ----------
@@ -1343,6 +1370,7 @@
   var legendEl = document.getElementById("legendRow");
   var progressLegendEl = document.getElementById("progressLegend");
   var hintEl = document.getElementById("hintText");
+  var cloudPromptEl = document.getElementById("cloudPrompt");
   var calendarGridEl = document.getElementById("calendarGrid");
 
   var prevMonthBtn = document.getElementById("prevMonthBtn");
@@ -2444,6 +2472,7 @@
     });
 
     hintEl.style.display = state.items.length === 0 ? "block" : "none";
+    renderCloudPrompt();
   }
 
   function buildIgChip(item) {
