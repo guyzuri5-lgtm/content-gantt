@@ -14,7 +14,7 @@
 - מצב כהה ותצוגת agenda למובייל
 
 - גיבוי לקובץ JSON ושחזור ממנו (מיזוג או החלפה מלאה)
-- סנכרון אופציונלי בין מכשירים דרך Supabase, עם התחברות בקישור למייל
+- סנכרון אופציונלי בין מכשירים דרך Supabase, עם התחברות במייל וסיסמה
 
 ## שמירת נתונים
 הנתונים נשמרים ב-`localStorage` בדפדפן (מפתח `content-gantt-data-v1`), לכל דומיין בנפרד.
@@ -53,7 +53,8 @@ create policy "insert own ig" on public.ig_imports for insert with check (auth.u
 create policy "update own ig" on public.ig_imports for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 ```
 
-3. ב-Authentication → URL Configuration מגדירים את כתובת האתר תחת Site URL ותחת Redirect URLs.
+3. ב-Authentication → Sign In / Providers → Email: משאירים את ספק המייל פעיל ו**מכבים את Confirm email**.
+   ההתחברות היא מייל + סיסמה, בלי שליחת מיילים — כך אין תלות בשירות המייל ואין מגבלת קצב.
 4. ב-`index.html`, בראש בלוק ה-`<script>`, ממלאים את `SUPABASE_URL` ואת `SUPABASE_ANON_KEY` (המפתח הפומבי בלבד — לא `service_role`).
 
 כל עוד שני הערכים ריקים, הלוח עובד בדיוק כמו קודם עם שמירה מקומית בלבד.

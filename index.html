@@ -1416,44 +1416,82 @@
 
     var intro = document.createElement("p");
     intro.className = "sync-note";
-    intro.textContent = "הזינו מייל ונשלח אליכם קישור התחברות. אין סיסמה לזכור, ורק מי שמחובר יכול לראות את הלוח.";
+    intro.textContent = "התחברו עם מייל וסיסמה. בפעם הראשונה בכל מכשיר מתחברים פעם אחת, ומשם הלוח מסונכרן אוטומטית.";
     syncCloudBodyEl.appendChild(intro);
 
-    var row = document.createElement("div");
-    row.className = "sync-email-row";
     var emailInput = document.createElement("input");
     emailInput.type = "email";
     emailInput.className = "text-input";
     emailInput.placeholder = "you@example.com";
     emailInput.dir = "ltr";
-    var sendBtn = document.createElement("button");
-    sendBtn.type = "button";
-    sendBtn.className = "btn btn-primary";
-    sendBtn.textContent = "שליחת קישור";
-    sendBtn.addEventListener("click", function () {
+    emailInput.autocomplete = "username";
+
+    var passInput = document.createElement("input");
+    passInput.type = "password";
+    passInput.className = "text-input";
+    passInput.placeholder = "סיסמה (לפחות 6 תווים)";
+    passInput.dir = "ltr";
+    passInput.autocomplete = "current-password";
+    passInput.style.marginTop = "8px";
+
+    var authActions = document.createElement("div");
+    authActions.className = "backup-actions";
+    authActions.style.marginTop = "10px";
+
+    function authAttempt(mode, btn, label) {
       var email = emailInput.value.trim();
+      var pass = passInput.value;
       if (!email || email.indexOf("@") < 0) { emailInput.focus(); return; }
-      sendBtn.disabled = true;
-      sendBtn.textContent = "שולח…";
-      cloud.client.auth
-        .signInWithOtp({ email: email, options: { emailRedirectTo: location.origin + location.pathname } })
-        .then(function (res) {
-          if (res && res.error) {
-            sendBtn.disabled = false;
-            sendBtn.textContent = "שליחת קישור";
-            setCloudStatus("error", "שליחת הקישור נכשלה: " + res.error.message);
-            return;
-          }
-          setCloudStatus("signed-out", "נשלח קישור התחברות ל־" + email + ". פתחו אותו מהמכשיר הזה.");
-        }, function (e) {
-          sendBtn.disabled = false;
-          sendBtn.textContent = "שליחת קישור";
-          setCloudStatus("error", "שליחת הקישור נכשלה: " + (e && e.message ? e.message : "שגיאה"));
-        });
+      if (!pass || pass.length < 6) {
+        setCloudStatus("error", "הסיסמה צריכה להיות באורך 6 תווים לפחות.");
+        passInput.focus();
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = "רגע…";
+      var call = mode === "signup"
+        ? cloud.client.auth.signUp({ email: email, password: pass })
+        : cloud.client.auth.signInWithPassword({ email: email, password: pass });
+      call.then(function (res) {
+        btn.disabled = false;
+        btn.textContent = label;
+        if (res && res.error) {
+          setCloudStatus("error", (mode === "signup" ? "יצירת החשבון נכשלה: " : "ההתחברות נכשלה: ") + res.error.message);
+          return;
+        }
+        if (mode === "signup" && res && res.data && res.data.user && !res.data.session) {
+          setCloudStatus("signed-out", "החשבון נוצר, אבל נדרש אימות מייל. כבו את Confirm email בהגדרות Supabase והתחברו שוב.");
+          return;
+        }
+        // onAuthStateChange כבר יטפל במשיכה ובסנכרון
+      }, function (e) {
+        btn.disabled = false;
+        btn.textContent = label;
+        setCloudStatus("error", "ההתחברות נכשלה: " + (e && e.message ? e.message : "שגיאה לא ידועה"));
+      });
+    }
+
+    var signInBtn = document.createElement("button");
+    signInBtn.type = "button";
+    signInBtn.className = "btn btn-primary";
+    signInBtn.textContent = "התחברות";
+    signInBtn.addEventListener("click", function () { authAttempt("signin", signInBtn, "התחברות"); });
+
+    var signUpBtn = document.createElement("button");
+    signUpBtn.type = "button";
+    signUpBtn.className = "btn btn-ghost";
+    signUpBtn.textContent = "יצירת חשבון";
+    signUpBtn.addEventListener("click", function () { authAttempt("signup", signUpBtn, "יצירת חשבון"); });
+
+    passInput.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") authAttempt("signin", signInBtn, "התחברות");
     });
-    row.appendChild(emailInput);
-    row.appendChild(sendBtn);
-    syncCloudBodyEl.appendChild(row);
+
+    authActions.appendChild(signInBtn);
+    authActions.appendChild(signUpBtn);
+    syncCloudBodyEl.appendChild(emailInput);
+    syncCloudBodyEl.appendChild(passInput);
+    syncCloudBodyEl.appendChild(authActions);
   }
 
   function openSyncModal() {
