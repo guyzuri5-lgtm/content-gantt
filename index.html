@@ -462,6 +462,7 @@
   var SUPABASE_URL = "https://gtgrgmslwunbtmfilnog.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_8_eHpmDoOVUtwHZLc_QGsw_nfWOUlVP";
   var SUPABASE_TABLE = "boards";
+  var SUPABASE_IG_TABLE = "ig_imports";
   var SUPABASE_SDK_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js";
 
   // מוגדר כאן ולא בסעיף הענן: persist() רץ כבר בזמן הטעינה, לפני שהסעיף ההוא מגיע
@@ -608,9 +609,8 @@
     state.statuses.forEach(function (st) { item.statusFlags[st.id] = true; });
   }
 
-  function mergeIgImport() {
-    var importData = window.IG_IMPORT_DATA;
-    if (!importData || !Array.isArray(importData.posts)) return;
+  function mergeIgImport(importData) {
+    if (!importData || !Array.isArray(importData.posts)) return false;
     var changed = false;
     importData.posts.forEach(function (post) {
       var igFields = {
@@ -658,9 +658,11 @@
       }
       changed = true;
     });
-    if (changed) persist();
+    return changed;
   }
-  mergeIgImport();
+
+  // הנתונים המוטמעים בקובץ הם מקור זמני בלבד — אחרי ההעברה ל-Supabase הבלוק יוסר
+  if (window.IG_IMPORT_DATA && mergeIgImport(window.IG_IMPORT_DATA)) persist();
 
   // one-time migration: מוכן להעלאה/מתוזמן/הועלה בפועל -> צולם/נערך/תוזמן
   (function migrateStatusFields() {
@@ -1190,13 +1192,58 @@
           } else {
             setCloudStatus("synced", "");
           }
+          syncIgFromCloud();
         } else {
           // אין עדיין לוח בענן — מעלים את מה שיש במכשיר הזה
           cloud.pulledOnce = true;
           pushToCloud();
+          syncIgFromCloud();
         }
       }, function (e) {
         setCloudStatus("error", "המשיכה מהענן נכשלה: " + (e && e.message ? e.message : "שגיאה לא ידועה"));
+      });
+  }
+
+  // נתוני הרילז יושבים בטבלה נפרדת מאחורי ההתחברות, ולא בקובץ הפומבי
+  function syncIgFromCloud() {
+    if (!cloud.client || !cloud.user) return;
+    cloud.client
+      .from(SUPABASE_IG_TABLE)
+      .select("data")
+      .eq("user_id", cloud.user.id)
+      .maybeSingle()
+      .then(function (res) {
+        if (res && res.error) {
+          setCloudStatus("error", "משיכת נתוני הרילז נכשלה: " + res.error.message);
+          return;
+        }
+        var remote = res && res.data ? res.data.data : null;
+        if (remote && Array.isArray(remote.posts)) {
+          if (mergeIgImport(remote)) {
+            persistLocal();
+            scheduleCloudPush();
+            rerenderAll();
+          }
+          return;
+        }
+        // אין עדיין רילז בענן — העלאה חד־פעמית של מה שמוטמע בקובץ
+        var embedded = window.IG_IMPORT_DATA;
+        if (!embedded || !Array.isArray(embedded.posts)) return;
+        setCloudStatus("working", "מעביר " + embedded.posts.length + " רילז לענן…");
+        cloud.client
+          .from(SUPABASE_IG_TABLE)
+          .upsert({ user_id: cloud.user.id, data: embedded, updated_at: new Date().toISOString() })
+          .then(function (up) {
+            if (up && up.error) {
+              setCloudStatus("error", "העברת נתוני הרילז נכשלה: " + up.error.message);
+              return;
+            }
+            setCloudStatus("synced", "");
+          }, function (e) {
+            setCloudStatus("error", "העברת נתוני הרילז נכשלה: " + (e && e.message ? e.message : "שגיאה"));
+          });
+      }, function (e) {
+        setCloudStatus("error", "משיכת נתוני הרילז נכשלה: " + (e && e.message ? e.message : "שגיאה"));
       });
   }
 

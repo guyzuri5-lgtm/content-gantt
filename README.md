@@ -38,6 +38,21 @@ create policy "insert own board" on public.boards for insert with check (auth.ui
 create policy "update own board" on public.boards for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 ```
 
+```sql
+-- נתוני הרילז והתובנות — טבלה נפרדת, מאחורי אותה התחברות
+create table if not exists public.ig_imports (
+  user_id    uuid primary key references auth.users(id) on delete cascade,
+  data       jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.ig_imports enable row level security;
+
+create policy "read own ig"   on public.ig_imports for select using (auth.uid() = user_id);
+create policy "insert own ig" on public.ig_imports for insert with check (auth.uid() = user_id);
+create policy "update own ig" on public.ig_imports for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+```
+
 3. ב-Authentication → URL Configuration מגדירים את כתובת האתר תחת Site URL ותחת Redirect URLs.
 4. ב-`index.html`, בראש בלוק ה-`<script>`, ממלאים את `SUPABASE_URL` ואת `SUPABASE_ANON_KEY` (המפתח הפומבי בלבד — לא `service_role`).
 
