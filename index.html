@@ -498,6 +498,8 @@
     status: "off",
     message: "",
     pulledOnce: false,
+    pulling: false,
+    pullWatchdog: null,
     pushTimer: null,
     pushing: false,
     pendingPush: false,
@@ -637,6 +639,11 @@
     state.statuses.forEach(function (st) { item.statusFlags[st.id] = true; });
   }
 
+  function allStatusesMarked(item) {
+    if (!item.statusFlags || typeof item.statusFlags !== "object") return false;
+    return state.statuses.every(function (st) { return item.statusFlags[st.id] === true; });
+  }
+
   function mergeIgImport(importData) {
     if (!importData || !Array.isArray(importData.posts)) return false;
     var changed = false;
@@ -659,12 +666,21 @@
         if (state.items[i].id === post.id) { existing = state.items[i]; break; }
       }
       if (existing) {
-        existing.ig = igFields;
-        existing.date = post.date;
-        existing.filmed = true;
-        existing.edited = true;
-        existing.scheduled = true;
-        markAllStatuses(existing);
+        // רק הפרש אמיתי נחשב שינוי. קודם כל סנכרון רילז "שינה" הכול, וזה גרר
+        // שמירה מקומית + דחיפה של כל הלוח לענן + בנייה מחדש של הלוח בכל פעם.
+        var same = existing.date === post.date &&
+          existing.filmed === true && existing.edited === true && existing.scheduled === true &&
+          allStatusesMarked(existing) &&
+          JSON.stringify(existing.ig || null) === JSON.stringify(igFields);
+        if (!same) {
+          existing.ig = igFields;
+          existing.date = post.date;
+          existing.filmed = true;
+          existing.edited = true;
+          existing.scheduled = true;
+          markAllStatuses(existing);
+          changed = true;
+        }
       } else {
         var firstLine = (post.caption || "").split("\n")[0].trim();
         var title = firstLine ? firstLine.slice(0, 80) : "ריל מאינסטגרם";
@@ -683,8 +699,8 @@
           ig: igFields
         });
         markAllStatuses(state.items[state.items.length - 1]);
+        changed = true;
       }
-      changed = true;
     });
     return changed;
   }
@@ -1205,37 +1221,58 @@
       });
   }
 
-  function pullFromCloud() {
+  // background=true הוא רענון שקט של לשונית שחזרה לפוקוס: בלי מסך טעינה,
+  // ובלי לבנות מחדש את הלוח אם לא באמת הגיע משהו חדש מהענן.
+  function pullFromCloud(background) {
     if (!cloud.client || !cloud.user) return;
-    setCloudStatus("working", "מסנכרן…");
+    if (cloud.pulling) return;
+    cloud.pulling = true;
+    // בלי זה בקשה שנתקעת משאירה את השער על "טוען…" בלי סוף ובלי הסבר
+    clearTimeout(cloud.pullWatchdog);
+    cloud.pullWatchdog = setTimeout(function () {
+      if (!cloud.pulling) return;
+      cloud.pulling = false;
+      setCloudStatus("error", "המשיכה מהענן לא הסתיימה. בדקו את החיבור לאינטרנט ונסו שוב.");
+    }, 15000);
+    if (!background) setCloudStatus("working", "מסנכרן…");
     cloud.client
       .from(SUPABASE_TABLE)
       .select("data")
       .eq("user_id", cloud.user.id)
       .maybeSingle()
       .then(function (res) {
+        cloud.pulling = false;
+        clearTimeout(cloud.pullWatchdog);
         if (res && res.error) { setCloudStatus("error", "המשיכה מהענן נכשלה: " + res.error.message); return; }
         var remote = res && res.data ? res.data.data : null;
+        var firstPull = !cloud.pulledOnce;
         if (looksLikeBoard(remote)) {
           var localOnly = countMissingItems(remote, state);
+          var before = JSON.stringify(state);
           applyState(mergeStates(remote, state));
-          persistLocal();
-          rerenderAll();
           cloud.pulledOnce = true;
+          if (JSON.stringify(state) !== before) {
+            persistLocal();
+            rerenderAll();
+          } else if (firstPull) {
+            rerenderAll();
+          }
           if (localOnly > 0) {
             setCloudStatus("working", "מעלה " + localOnly + " פריטים מהמכשיר הזה…");
             pushToCloud();
           } else {
             setCloudStatus("synced", "");
           }
-          syncIgFromCloud(true);
         } else {
           // אין עדיין לוח בענן — מעלים את מה שיש במכשיר הזה
           cloud.pulledOnce = true;
           pushToCloud();
-          syncIgFromCloud(true);
         }
+        // הרילז לא משתנים תוך כדי עבודה, ולכן נמשכים פעם אחת לטעינה ולא בכל רענון
+        if (firstPull) syncIgFromCloud(true);
       }, function (e) {
+        cloud.pulling = false;
+        clearTimeout(cloud.pullWatchdog);
         setCloudStatus("error", "המשיכה מהענן נכשלה: " + (e && e.message ? e.message : "שגיאה לא ידועה"));
       });
   }
@@ -1300,11 +1337,19 @@
   }
 
   function onAuthChanged(session) {
-    cloud.user = session && session.user ? session.user : null;
-    cloud.pulledOnce = false;
-    if (cloud.user) pullFromCloud();
-    else setCloudStatus("signed-out", "");
+    var nextUser = session && session.user ? session.user : null;
+    var prevId = cloud.user ? cloud.user.id : null;
+    var nextId = nextUser ? nextUser.id : null;
+    var sameUser = nextId === prevId;
+    cloud.user = nextUser;
     if (syncModalOverlay.classList.contains("is-open")) renderSyncModal();
+    // Supabase יורה על האירוע הזה גם ב-INITIAL_SESSION וגם בכל רענון טוקן.
+    // קודם כל אירוע כזה אִפֵּס את pulledOnce, סגר את הלוח מאחורי שער הטעינה
+    // ומשך הכול מחדש. אותו משתמש שכבר נמשך = אין מה לעשות.
+    if (sameUser && (cloud.pulledOnce || cloud.pulling)) return;
+    cloud.pulledOnce = false;
+    if (nextId) pullFromCloud();
+    else if (!sameUser || cloud.status !== "signed-out") setCloudStatus("signed-out", "");
   }
 
   function initCloud() {
@@ -1351,25 +1396,63 @@
     syncLabelEl.className = cls;
   }
 
+  // setCloudStatus קורא לפונקציה הזאת בכל שינוי מצב. בלי החתימה הזאת היא בנתה
+  // מחדש את גוף השער בכל פעם — כולל focus() שגנב את הסמן מאמצע העבודה.
+  var authGateSig = "";
+
   function renderAuthGate() {
     if (!authGateEl) return;
     var needsGate = cloud.configured && (!cloud.user || !cloud.pulledOnce);
     authGateEl.classList.toggle("is-open", needsGate);
-    if (!needsGate) { authBodyEl.innerHTML = ""; return; }
+    if (!needsGate) {
+      if (authGateSig !== "closed") { authBodyEl.innerHTML = ""; authGateSig = "closed"; }
+      return;
+    }
+
+    // כשל במשיכה השאיר קודם מסך "טוען את הלוח שלך מהענן…" נצחי: ההודעה נכתבה
+    // ל-cloud.message אבל אף פעם לא הוצגה, ולא היה שום כפתור לצאת מזה.
+    if (cloud.user && cloud.status === "error") {
+      if (authGateSig !== "error") {
+        authBodyEl.innerHTML = "";
+        var errActions = document.createElement("div");
+        errActions.className = "auth-actions";
+        var retryBtn = document.createElement("button");
+        retryBtn.type = "button";
+        retryBtn.className = "btn btn-primary";
+        retryBtn.textContent = "נסו שוב";
+        retryBtn.addEventListener("click", function () { authMessage(""); pullFromCloud(); });
+        var outBtn = document.createElement("button");
+        outBtn.type = "button";
+        outBtn.className = "btn btn-ghost";
+        outBtn.textContent = "התנתקות";
+        outBtn.addEventListener("click", function () { if (cloud.client) cloud.client.auth.signOut(); });
+        errActions.appendChild(retryBtn);
+        errActions.appendChild(outBtn);
+        authBodyEl.appendChild(errActions);
+        authGateSig = "error";
+      }
+      authMessage(cloud.message || "הסנכרון נכשל.", true);
+      return;
+    }
 
     // מחובר אבל עוד לא נמשך — מסך המתנה, בלי טופס
     if (cloud.user || cloud.status === "loading") {
-      authBodyEl.innerHTML = "";
-      var busy = document.createElement("div");
-      busy.className = "auth-busy";
-      busy.textContent = cloud.user ? "טוען את הלוח שלך מהענן…" : "מתחבר…";
-      authBodyEl.appendChild(busy);
+      var busyText = cloud.user ? "טוען את הלוח שלך מהענן…" : "מתחבר…";
+      if (authGateSig !== "busy:" + busyText) {
+        authBodyEl.innerHTML = "";
+        var busy = document.createElement("div");
+        busy.className = "auth-busy";
+        busy.textContent = busyText;
+        authBodyEl.appendChild(busy);
+        authGateSig = "busy:" + busyText;
+      }
       if (cloud.status !== "error") authMessage("");
       return;
     }
 
-    if (authBodyEl.querySelector("input")) return;   // לא לדרוס הקלדה באמצע
+    if (authGateSig === "form" || authBodyEl.querySelector("input")) return;   // לא לדרוס הקלדה באמצע
     authBodyEl.innerHTML = "";
+    authGateSig = "form";
     authIntroEl.textContent = "מתחברים פעם אחת בכל מכשיר. מרגע זה כל שינוי נשמר בענן אוטומטית, וניקוי הדפדפן לא מוחק כלום.";
 
     var emailInput = document.createElement("input");
@@ -2929,9 +3012,18 @@
     importFileInput.value = "";
   });
 
-  // חזרה ללשונית מושכת שינויים שנעשו במכשיר אחר
-  window.addEventListener("focus", function () {
-    if (cloud.user && cloud.pulledOnce && !cloud.pushing) pullFromCloud();
+  // חזרה ללשונית מושכת שינויים שנעשו במכשיר אחר.
+  // קודם זה היה על focus של החלון, שנורה גם כשחוזרים מאפליקציה אחרת, מסוגרים
+  // דיאלוג או מקליקים בחזרה על העמוד — כל פעם משיכה מלאה ובנייה מחדש של הלוח.
+  // עכשיו: רק כשהלשונית באמת חוזרת להיות גלויה, בשקט, ולא יותר מפעם בדקה.
+  var lastBackgroundPull = 0;
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible") return;
+    if (!cloud.user || !cloud.pulledOnce || cloud.pushing || cloud.pulling) return;
+    var now = Date.now();
+    if (now - lastBackgroundPull < 60000) return;
+    lastBackgroundPull = now;
+    pullFromCloud(true);
   });
 
   (function checkStorageAvailable() {
