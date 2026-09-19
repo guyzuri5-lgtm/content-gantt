@@ -29,6 +29,14 @@ export const METRICS = [
   "ig_reels_avg_watch_time",
 ];
 
+/**
+ * שמות הכלים אצל Composio. התיעוד מפרסם גרסאות INSTAGRAM_GET_IG_* חדשות יותר,
+ * אבל הפרויקט הזה חושף רק את הדור הקודם — ולכן שם שגוי נופל כ-404 סתמי.
+ * debug:"tools" בנקודת הקצה מדפיס את מה שבאמת קיים.
+ */
+const TOOL_LIST_MEDIA = process.env.IG_TOOL_LIST_MEDIA || "INSTAGRAM_GET_USER_MEDIA";
+const TOOL_MEDIA_INSIGHTS = process.env.IG_TOOL_INSIGHTS || "INSTAGRAM_GET_POST_INSIGHTS";
+
 const MEDIA_FIELDS =
   "id,caption,permalink,thumbnail_url,media_url,timestamp,media_type,media_product_type";
 
@@ -166,6 +174,26 @@ export async function listInstagramTools(apiKey) {
   return { query: null, count: 0, tools: [] };
 }
 
+/** הסכמה המדויקת של כלי — כדי לדעת איך קוראים לארגומנטים, ולא לנחש. */
+export async function describeTools(apiKey, slugs) {
+  const out = {};
+  for (const slug of slugs) {
+    try {
+      const body = await composioFetch(apiKey, `/tools/${slug}`);
+      const schema = body?.input_parameters || body?.inputParameters || body?.parameters || body?.input_schema;
+      out[slug] = {
+        found: true,
+        version: body?.version,
+        params: schema?.properties ? Object.keys(schema.properties) : schema,
+        required: schema?.required,
+      };
+    } catch (e) {
+      out[slug] = { found: false, error: e?.message };
+    }
+  }
+  return out;
+}
+
 // ── The pipeline ────────────────────────────────────────────────────────────
 
 /**
@@ -177,12 +205,12 @@ async function listMediaPage(apiKey, composioUserId, { limit, after }) {
   const full = { ig_user_id: "me", limit, fields: MEDIA_FIELDS };
   if (after) full.after = after;
   try {
-    return await runTool(apiKey, "INSTAGRAM_GET_IG_USER_MEDIA", composioUserId, full);
+    return await runTool(apiKey, TOOL_LIST_MEDIA, composioUserId, full);
   } catch (e) {
     if (!(e instanceof IgError)) throw e;
     const minimal = { ig_user_id: "me", limit };
     if (after) minimal.after = after;
-    return await runTool(apiKey, "INSTAGRAM_GET_IG_USER_MEDIA", composioUserId, minimal);
+    return await runTool(apiKey, TOOL_LIST_MEDIA, composioUserId, minimal);
   }
 }
 
@@ -198,7 +226,7 @@ async function fetchInsights(apiKey, composioUserId, mediaId) {
 
   for (let attempt = 0; attempt < METRICS.length && metrics.length > 0; attempt++) {
     try {
-      const raw = await runTool(apiKey, "INSTAGRAM_GET_IG_MEDIA_INSIGHTS", composioUserId, {
+      const raw = await runTool(apiKey, TOOL_MEDIA_INSIGHTS, composioUserId, {
         ig_media_id: mediaId,
         metric: metrics.join(","),
       });

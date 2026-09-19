@@ -20,6 +20,7 @@
 import {
   IgError,
   listInstagramTools,
+  describeTools,
   getInstagramConnection,
   listReelsInWindow,
   attachInsights,
@@ -116,6 +117,17 @@ export default async function handler(req, res) {
   const body = await readBody(req);
 
   // אבחון: לא עולה כלום ולא נוגע בנתונים, ולכן פטור ממגבלת הקצב
+  if (body.debug === "schema") {
+    try {
+      const slugs = Array.isArray(body.slugs) && body.slugs.length
+        ? body.slugs
+        : ["INSTAGRAM_GET_USER_MEDIA", "INSTAGRAM_GET_POST_INSIGHTS"];
+      return send(res, 200, { ok: true, schemas: await describeTools(apiKey, slugs) });
+    } catch (e) {
+      return send(res, 502, { error: e?.message });
+    }
+  }
+
   if (body.debug === "tools") {
     try {
       const listed = await listInstagramTools(apiKey);
