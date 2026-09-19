@@ -183,18 +183,26 @@ export default async function handler(req, res) {
     note(`נמצאו ${reels.length} רילז בחלון של ${windowDays} ימים`);
 
     // Incremental: everything new, plus anything recent enough that its numbers
-    // are probably still moving. Reels older than that are already settled.
+    // are probably still moving, plus anything stored without metrics at all —
+    // בלי הסעיף האחרון ריל שנשמר פעם בלי תובנות היה נשאר בלי מספרים לנצח,
+    // כי בריצה הבאה הוא כבר לא "חדש" וגם לא "אחרון".
     const refreshCutoff = Date.now() - refreshDays * 24 * 60 * 60 * 1000;
     const targets =
       mode === "full"
         ? reels
         : reels.filter((r) => {
-            if (!storedById.has(r.id)) return true;
+            const prev = storedById.get(r.id);
+            if (!prev) return true;
+            if (prev.reach == null && prev.views == null) return true;
             return new Date(r.timestamp).getTime() >= refreshCutoff;
           });
 
     const newOnes = targets.filter((r) => !storedById.has(r.id)).length;
-    note(`נשלפות תובנות ל-${targets.length} רילז (${newOnes} חדשים)`);
+    const backfill = targets.filter((r) => {
+      const prev = storedById.get(r.id);
+      return prev && prev.reach == null && prev.views == null;
+    }).length;
+    note(`נשלפות תובנות ל-${targets.length} רילז (${newOnes} חדשים, ${backfill} השלמת חוסרים)`);
 
     if (targets.length === 0) {
       return send(res, 200, {
