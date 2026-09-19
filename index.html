@@ -78,19 +78,11 @@
   .title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
   .brand { display: flex; align-items: center; gap: 9px; }
   .title-actions { display: flex; align-items: center; gap: 4px; }
-  .auth-gate { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; background: var(--paper); }
-  .auth-gate.is-open { display: flex; }
+  .boot-gate { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; background: var(--paper); }
+  .boot-gate.is-open { display: flex; }
   .auth-card { width: 100%; max-width: 380px; background: var(--surface-raised); border: 1px solid var(--line); border-radius: 16px; padding: 28px 24px; }
   .auth-card h2 { margin: 0 0 6px; font-size: 1.15rem; color: var(--ink-900); }
   .auth-card p { margin: 0 0 18px; font-size: 0.84rem; color: var(--ink-500); line-height: 1.55; }
-  .auth-card .text-input { width: 100%; }
-  .auth-card .text-input + .text-input { margin-top: 8px; }
-  .auth-actions { display: flex; gap: 8px; margin-top: 14px; }
-  .auth-actions .btn { flex: 1; }
-  .auth-msg { margin: 14px 0 0; font-size: 0.8rem; line-height: 1.5; display: none; }
-  .auth-msg.is-visible { display: block; }
-  .auth-msg.is-error { color: var(--danger); }
-  .auth-busy { display: flex; align-items: center; gap: 8px; font-size: 0.86rem; color: var(--ink-500); }
   .sync-label { font-size: 0.72rem; font-weight: 700; color: var(--ink-400); white-space: nowrap; }
   .sync-label.is-saved { color: #0ca30c; }
   .sync-label.is-error { color: var(--danger); }
@@ -316,7 +308,7 @@
   .sync-dot.is-synced { background: #0ca30c; }
   .sync-dot.is-working { background: #fab219; }
   .sync-dot.is-error { background: var(--danger); }
-  .sync-dot.is-signed-out { background: var(--ink-400); }
+  .sync-dot.is-idle { background: var(--ink-400); }
   .sync-status { display: flex; align-items: center; gap: 7px; font-size: 0.84rem; color: var(--ink-600); margin: 0 0 10px; }
   .sync-status .dot { width: 8px; height: 8px; }
   .sync-note { font-size: 0.76rem; color: var(--ink-500); line-height: 1.55; margin: 0 0 10px; }
@@ -328,16 +320,146 @@
   .import-preview { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
   .import-preview-text { font-size: 0.8rem; color: var(--ink-600); margin: 0 0 10px; line-height: 1.5; }
   .status-toggle-btn.is-active { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08); }
+
+  [hidden] { display: none !important; }
+
+  /* ---------- מעבר בין מסכים ---------- */
+  .view-tabs { display: inline-flex; gap: 2px; padding: 3px; margin-bottom: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .view-tab { padding: 7px 16px; border-radius: 7px; font-size: 0.82rem; font-weight: 700; color: var(--ink-500); display: flex; align-items: center; gap: 6px; }
+  .view-tab svg { width: 15px; height: 15px; }
+  .view-tab:hover { color: var(--ink-900); }
+  .view-tab.is-active { background: var(--accent); color: #fff; }
+  .view-tab.is-active:hover { color: #fff; }
+
+  /* ---------- מסך ניתוח הרילז ---------- */
+  .analytics {
+    --win: #1a8a54; --win-soft: #e4f4ec;
+    --warn: #a2700a; --warn-soft: #faf0d8;
+    --axis-hook: #1e4145; --axis-reach: #3f6fa8; --axis-viral: #7a5ba8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .analytics {
+      --win: #57c288; --win-soft: #1c2f26;
+      --warn: #d7a942; --warn-soft: #322a19;
+      --axis-hook: #59b3a6; --axis-reach: #6f9fd8; --axis-viral: #a98ad4;
+    }
+  }
+  :root[data-theme="dark"] .analytics {
+    --win: #57c288; --win-soft: #1c2f26;
+    --warn: #d7a942; --warn-soft: #322a19;
+    --axis-hook: #59b3a6; --axis-reach: #6f9fd8; --axis-viral: #a98ad4;
+  }
+
+  .analytics { display: none; }
+  .analytics.is-active { display: block; }
+  .analytics-empty { padding: 44px 24px; text-align: center; border: 1px dashed var(--line-strong); border-radius: 14px; color: var(--ink-500); font-size: 0.88rem; line-height: 1.7; background: var(--surface); }
+
+  .an-card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
+  .an-card-title { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.04em; color: var(--ink-400); margin-bottom: 12px; }
+  .an-note { font-size: 0.8rem; color: var(--ink-500); line-height: 1.6; }
+
+  /* שליפה */
+  .an-refresh { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .an-refresh .btn-primary { flex: none; }
+  .an-refresh-status { font-size: 0.8rem; color: var(--ink-500); flex: 1; min-width: 180px; line-height: 1.5; }
+  .an-refresh-status.is-error { color: var(--danger); }
+  .an-refresh-status.is-ok { color: var(--win); }
+  .an-log { margin: 10px 0 0; padding: 10px 12px; border-radius: 8px; background: var(--paper); border: 1px solid var(--line); font-size: 0.74rem; color: var(--ink-500); line-height: 1.7; max-height: 150px; overflow: auto; }
+  .an-log div { direction: ltr; text-align: right; unicode-bidi: plaintext; }
+  .an-spin { width: 14px; height: 14px; border: 2px solid var(--line-strong); border-top-color: var(--accent); border-radius: 50%; display: inline-block; vertical-align: -2px; margin-inline-end: 6px; animation: an-spin 0.7s linear infinite; }
+  @keyframes an-spin { to { transform: rotate(360deg); } }
+
+  /* פרמטרים */
+  .an-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .an-control { display: flex; flex-direction: column; gap: 5px; }
+  .an-control label { font-size: 0.72rem; font-weight: 700; color: var(--ink-500); }
+  .an-control input, .an-control select { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-raised); font-size: 0.84rem; font-variant-numeric: tabular-nums; }
+  .an-control input:focus, .an-control select:focus { outline: none; border-color: var(--accent); }
+  .an-control .an-hint { font-size: 0.68rem; color: var(--ink-400); line-height: 1.4; }
+
+  /* כותרת-על */
+  .an-headline { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .an-headline-big { font-size: 2.4rem; font-weight: 800; color: var(--accent); line-height: 1; font-variant-numeric: tabular-nums; }
+  .an-headline-text { font-size: 0.88rem; color: var(--ink-600); line-height: 1.6; max-width: 52ch; }
+
+  /* רשת פעולה */
+  .an-grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+  @media (max-width: 860px) { .an-grid3 { grid-template-columns: 1fr; } }
+  .an-panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 14px; border-top: 3px solid var(--line-strong); }
+  .an-panel.is-do { border-top-color: var(--win); }
+  .an-panel.is-stop { border-top-color: var(--danger); }
+  .an-panel.is-fix { border-top-color: var(--warn); }
+  .an-panel-head { font-size: 0.82rem; font-weight: 800; margin-bottom: 4px; }
+  .an-panel.is-do .an-panel-head { color: var(--win); }
+  .an-panel.is-stop .an-panel-head { color: var(--danger); }
+  .an-panel.is-fix .an-panel-head { color: var(--warn); }
+  .an-panel-sub { font-size: 0.7rem; color: var(--ink-400); margin-bottom: 10px; line-height: 1.5; }
+
+  .an-mini { display: flex; gap: 9px; align-items: center; padding: 7px; border-radius: 9px; text-decoration: none; color: inherit; }
+  .an-mini:hover { background: var(--accent-soft); }
+  .an-mini img { width: 44px; height: 44px; border-radius: 7px; object-fit: cover; flex: none; background: var(--line); }
+  .an-mini-body { min-width: 0; flex: 1; }
+  .an-mini-caption { font-size: 0.76rem; color: var(--ink-900); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .an-mini-score { font-size: 0.68rem; color: var(--ink-400); font-variant-numeric: tabular-nums; }
+
+  /* מילים */
+  .an-words { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .an-words { grid-template-columns: 1fr; } }
+  .an-words h4 { margin: 0 0 8px; font-size: 0.74rem; font-weight: 800; color: var(--ink-500); }
+  .an-pill { display: inline-block; margin: 0 0 6px 6px; padding: 4px 10px; border-radius: 999px; font-size: 0.76rem; font-weight: 600; }
+  .an-pill.is-win { background: var(--win-soft); color: var(--win); }
+  .an-pill.is-flop { background: var(--danger-soft); color: var(--danger); }
+
+  /* רשימה מדורגת */
+  .an-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .an-row { display: grid; grid-template-columns: auto 78px 1fr auto; gap: 13px; align-items: center; background: var(--surface); border: 1px solid var(--line); border-inline-start: 3px solid var(--line-strong); border-radius: 14px; padding: 12px 14px; }
+  .an-row.is-top { border-inline-start-color: var(--win); }
+  .an-row.is-bottom { border-inline-start-color: var(--danger); }
+  .an-row.is-mismatch { border-inline-start-color: var(--warn); }
+  .an-rank { font-size: 0.9rem; font-weight: 800; color: var(--ink-400); font-variant-numeric: tabular-nums; min-width: 22px; text-align: center; }
+  .an-row img { width: 78px; height: 78px; border-radius: 9px; object-fit: cover; background: var(--line); display: block; }
+  .an-row-body { min-width: 0; }
+  .an-row-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 5px; }
+  .an-date { font-size: 0.7rem; color: var(--ink-400); font-variant-numeric: tabular-nums; }
+  .an-tag { font-size: 0.68rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--line); color: var(--ink-600); }
+  .an-tag.is-green { background: var(--win-soft); color: var(--win); }
+  .an-tag.is-amber { background: var(--warn-soft); color: var(--warn); }
+  .an-tag.is-red { background: var(--danger-soft); color: var(--danger); }
+  .an-caption { font-size: 0.82rem; color: var(--ink-900); line-height: 1.45; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .an-metrics { display: flex; gap: 12px; flex-wrap: wrap; font-size: 0.72rem; color: var(--ink-500); font-variant-numeric: tabular-nums; }
+  .an-metrics b { color: var(--ink-900); font-weight: 700; }
+
+  .an-axes { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; max-width: 320px; }
+  .an-axis { display: grid; grid-template-columns: 52px 1fr 30px; align-items: center; gap: 7px; font-size: 0.68rem; color: var(--ink-500); }
+  .an-axis-track { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .an-axis-fill { height: 100%; border-radius: 3px; }
+  .an-axis-value { text-align: start; font-variant-numeric: tabular-nums; color: var(--ink-400); }
+
+  .an-score { text-align: center; flex: none; }
+  .an-score-num { font-size: 1.25rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; line-height: 1.1; }
+  .an-score-label { font-size: 0.64rem; color: var(--ink-400); }
+  .an-open { display: inline-block; margin-top: 6px; font-size: 0.7rem; font-weight: 700; color: var(--ink-500); text-decoration: none; }
+  .an-open:hover { color: var(--accent); }
+
+  @media (max-width: 640px) {
+    .an-row { grid-template-columns: auto 60px 1fr; grid-template-areas: "rank thumb body" "score score score"; }
+    .an-row img { width: 60px; height: 60px; }
+    .an-rank { grid-area: rank; }
+    .an-row > a:first-of-type { grid-area: thumb; }
+    .an-row-body { grid-area: body; }
+    .an-score { grid-area: score; display: flex; align-items: center; justify-content: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+    .an-score-num { font-size: 1rem; }
+    .an-axes { max-width: none; }
+  }
+
 </style>
 </head>
 <body>
 
-<div class="auth-gate" id="authGate">
+<div class="boot-gate" id="bootGate">
   <div class="auth-card">
-    <h2 id="authTitle">גאנט תוכן</h2>
-    <p id="authIntro">מתחברים פעם אחת בכל מכשיר. מרגע זה כל שינוי נשמר בענן אוטומטית, וניקוי הדפדפן לא מוחק כלום.</p>
-    <div id="authBody"></div>
-    <p class="auth-msg" id="authMsg"></p>
+    <h2>גאנט תוכן</h2>
+    <p id="bootText">טוען את הלוח מהענן…</p>
   </div>
 </div>
 
@@ -365,6 +487,18 @@
       </div>
     </div>
 
+    <div class="view-tabs" role="tablist">
+      <button type="button" class="view-tab is-active" id="tabBoard" role="tab" aria-selected="true">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="2.5" y="3.5" width="15" height="13" rx="2"/><path d="M2.5 8h15M7 3.5v13"/></svg>
+        <span>לוח תוכן</span>
+      </button>
+      <button type="button" class="view-tab" id="tabAnalytics" role="tab" aria-selected="false">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16.5V11M8 16.5V5M13 16.5v-4M18 16.5V8"/></svg>
+        <span>ניתוח רילז</span>
+      </button>
+    </div>
+
+    <div id="boardHeaderBits">
     <div class="month-nav">
       <button type="button" id="prevMonthBtn" class="nav-btn" aria-label="חודש קודם">
         <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="7.5,4 13.5,10 7.5,16"/></svg>
@@ -386,14 +520,34 @@
     <div class="legend-row" id="legendRow"></div>
     <p class="progress-legend" id="progressLegend"></p>
     <p class="hint" id="hintText">טיפ: לחצו על כל יום בלוח כדי לשבץ בו תוכן חדש.</p>
+    </div>
   </header>
 
-  <div class="calendar-wrap">
+  <div class="calendar-wrap" id="calendarWrap">
     <div class="weekday-row">
       <span>א</span><span>ב</span><span>ג</span><span>ד</span><span>ה</span><span>ו</span><span>ש</span>
     </div>
     <div class="calendar-grid" id="calendarGrid"></div>
   </div>
+
+  <section class="analytics" id="analyticsView">
+    <div class="an-card">
+      <div class="an-card-title">שליפה מאינסטגרם</div>
+      <div class="an-refresh">
+        <button type="button" class="btn btn-primary" id="igRefreshBtn">ניתוח רילז חדשים</button>
+        <button type="button" class="btn btn-ghost" id="igFullRefreshBtn">רענון מלא</button>
+        <span class="an-refresh-status" id="igRefreshStatus"></span>
+      </div>
+      <div class="an-log" id="igRefreshLog" hidden></div>
+    </div>
+
+    <div class="an-card">
+      <div class="an-card-title">פרמטרים</div>
+      <div class="an-controls" id="igControls"></div>
+    </div>
+
+    <div id="igAnalysisBody"></div>
+  </section>
 
   <div class="modal-overlay" id="dayModalOverlay">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="dayModalTitle">
@@ -481,20 +635,23 @@
   // ---------------------------------------------------------------------------
   // סנכרון ענן (Supabase) — מלאו את שני הערכים כדי להפעיל.
   // כל עוד הם ריקים הלוח עובד בדיוק כמו קודם: שמירה מקומית בדפדפן בלבד.
-  // המפתח כאן הוא מפתח anon פומבי ומיועד לשבת בקוד צד־לקוח; הגישה לנתונים
-  // נשמרת על ידי התחברות במייל + מדיניות RLS בצד Supabase.
+  // המפתח כאן הוא מפתח anon פומבי ומיועד לשבת בקוד צד־לקוח. שימו לב שאין
+  // מעליו שום שכבת הגנה: ה-RLS של הטבלאות פתוח לקריאה ולכתיבה, ולכן כל מי
+  // שמגיע לכתובת הזאת יכול לקרוא ולשנות את הלוח. זו החלטה מודעת — ראו README.
   // ---------------------------------------------------------------------------
   var SUPABASE_URL = "https://gtgrgmslwunbtmfilnog.supabase.co";
   var SUPABASE_ANON_KEY = "sb_publishable_8_eHpmDoOVUtwHZLc_QGsw_nfWOUlVP";
-  var SUPABASE_TABLE = "boards";
-  var SUPABASE_IG_TABLE = "ig_imports";
+  // לוח משותף: אין חשבונות ואין התחברות. כל מי שפותח את הכתובת עובד על אותה
+  // שורה. הטבלאות האלה לא תלויות ב-auth.users, וה-RLS שלהן פתוח בכוונה.
+  var SUPABASE_TABLE = "shared_boards";
+  var SUPABASE_IG_TABLE = "shared_ig_imports";
+  var BOARD_ID = "main";
   var SUPABASE_SDK_URL = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js";
 
   // מוגדר כאן ולא בסעיף הענן: persist() רץ כבר בזמן הטעינה, לפני שהסעיף ההוא מגיע
   var cloud = {
     configured: !!(SUPABASE_URL && SUPABASE_ANON_KEY),
     client: null,
-    user: null,
     status: "off",
     message: "",
     pulledOnce: false,
@@ -607,12 +764,47 @@
 
   var state = loadState();
 
+  // ---------- נתוני הרילז ----------
+  // הנתונים הגולמיים חיים כאן ולא ב-state.items: הלוח צריך רק "מתי פורסם ומה
+  // הכותרת", והניתוח צריך את כל השדות. מקור האמת הוא טבלת ig_imports בענן.
+  var igData = { generatedAt: null, windowDays: null, posts: [] };
+
+  var DEFAULT_IG_SETTINGS = {
+    windowDays: 90,     // כמה אחורה מנתחים ומציגים
+    strongHookS: 12,    // מאיזה זמן צפייה ריל נחשב "הוק חזק"
+    replayRate: 1.2,    // צפיות חלקי חשיפה שמעליו יש צפייה חוזרת
+    topN: 3,            // כמה רילז בכל עמודה בטבלת הפעולה
+    sort: "hookScore",  // לפי מה ממיינים את הרשימה המלאה
+    fetchLimit: 25,     // כמה פוסטים לבקש מאינסטגרם בכל עמוד
+    refreshDays: 14     // עד כמה אחורה לרענן מספרים של רילז שכבר קיימים
+  };
+  var IG_SETTING_BOUNDS = {
+    windowDays: [1, 365], strongHookS: [1, 120], replayRate: [1, 10],
+    topN: [1, 10], fetchLimit: [1, 50], refreshDays: [0, 365]
+  };
+  var IG_SORTS = [
+    { id: "hookScore", name: "ציון הוק" },
+    { id: "reach", name: "חשיפה" },
+    { id: "views", name: "צפיות" },
+    { id: "watchTimeS", name: "זמן צפייה" },
+    { id: "totalInteractions", name: "מעורבות" },
+    { id: "date", name: "תאריך" }
+  ];
+
   function isHexColor(v) { return typeof v === "string" && /^#[0-9a-fA-F]{6}$/.test(v); }
 
   // נרמול ההגדרות — תמיד תוספתי, אף פעם לא מוחק פריטי תוכן קיימים
+  var DATE_KEY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
   function normalizeState() {
     if (!Array.isArray(state.types)) state.types = [];
     if (!Array.isArray(state.items)) state.items = [];
+    // כל הציור נשען על parseKey(item.date), ופריט בלי תאריך תקין הפיל את הלוח
+    // כולו. בלוח משותף שכל אחד יכול לכתוב אליו זה אומר שפריט פגום אחד נועל את
+    // כולם בחוץ — ולכן פריט שאי אפשר לצייר פשוט לא נכנס.
+    state.items = state.items.filter(function (it) {
+      return it && typeof it === "object" && it.id && typeof it.date === "string" && DATE_KEY_RE.test(it.date);
+    });
     if (!Array.isArray(state.activeWeekdays) || state.activeWeekdays.length !== 7) {
       state.activeWeekdays = [true, true, true, true, true, true, true];
     }
@@ -630,6 +822,19 @@
     if (!state.colorSources || typeof state.colorSources !== "object") state.colorSources = {};
     if (state.colorSources.chip !== "type" && state.colorSources.chip !== "status") state.colorSources.chip = DEFAULT_COLOR_SOURCES.chip;
     if (state.colorSources.dot !== "type" && state.colorSources.dot !== "status") state.colorSources.dot = DEFAULT_COLOR_SOURCES.dot;
+    normalizeIgSettings();
+  }
+
+  function normalizeIgSettings() {
+    if (!state.igSettings || typeof state.igSettings !== "object") state.igSettings = {};
+    Object.keys(IG_SETTING_BOUNDS).forEach(function (key) {
+      var bounds = IG_SETTING_BOUNDS[key];
+      var value = Number(state.igSettings[key]);
+      if (!isFinite(value)) value = DEFAULT_IG_SETTINGS[key];
+      state.igSettings[key] = Math.min(bounds[1], Math.max(bounds[0], value));
+    });
+    var known = IG_SORTS.some(function (s) { return s.id === state.igSettings.sort; });
+    if (!known) state.igSettings.sort = DEFAULT_IG_SETTINGS.sort;
   }
   normalizeState();
 
@@ -646,12 +851,22 @@
 
   function mergeIgImport(importData) {
     if (!importData || !Array.isArray(importData.posts)) return false;
+    // מקור אחד לשני הצרכנים: הלוח מקבל פריטים, ומסך הניתוח קורא את הגולמי הזה
+    igData = {
+      generatedAt: importData.generatedAt || null,
+      windowDays: importData.windowDays || null,
+      posts: importData.posts.slice()
+    };
+    if (typeof renderAnalytics === "function") renderAnalytics();
     var changed = false;
     importData.posts.forEach(function (post) {
       var igFields = {
         caption: post.caption,
         permalink: post.permalink,
         thumb: post.thumb,
+        timestamp: post.timestamp,
+        mediaType: post.mediaType,
+        durationS: post.durationS,
         reach: post.reach,
         views: post.views,
         likes: post.likes,
@@ -1036,7 +1251,8 @@
       statuses: (preferred.statuses || []).slice(),
       statusNone: preferred.statusNone,
       colorSources: preferred.colorSources,
-      activeWeekdays: preferred.activeWeekdays
+      activeWeekdays: preferred.activeWeekdays,
+      igSettings: preferred.igSettings || other.igSettings
     };
     function addMissing(targetList, sourceList) {
       var seen = {};
@@ -1062,6 +1278,7 @@
     state.statusNone = next.statusNone;
     state.colorSources = next.colorSources;
     state.activeWeekdays = next.activeWeekdays;
+    state.igSettings = next.igSettings;
     normalizeState();
   }
 
@@ -1072,6 +1289,7 @@
   function rerenderAll() {
     renderHeader();
     renderCalendar();
+    if (typeof renderAnalytics === "function") renderAnalytics();
     if (dayModalOverlay.classList.contains("is-open")) renderDayModal();
     if (settingsModalOverlay.classList.contains("is-open")) {
       renderWeekdayPicker();
@@ -1168,7 +1386,6 @@
   var CLOUD_STATUS_TEXT = {
     off: "סנכרון ענן לא מוגדר — הנתונים נשמרים בדפדפן הזה בלבד.",
     loading: "טוען סנכרון…",
-    "signed-out": "לא מחוברים — הנתונים נשמרים בדפדפן הזה בלבד.",
     working: "מסנכרן…",
     synced: "מסונכרן",
     error: "שגיאת סנכרון"
@@ -1180,12 +1397,12 @@
     if (syncDotEl) {
       syncDotEl.className = "sync-dot" +
         (status === "synced" ? " is-synced" : status === "error" ? " is-error" :
-         status === "working" || status === "loading" ? " is-working" : " is-signed-out");
+         status === "working" || status === "loading" ? " is-working" : " is-idle");
     }
     if (openSyncBtn) openSyncBtn.title = "סנכרון וגיבוי — " + (cloud.message || CLOUD_STATUS_TEXT[status] || "");
     if (syncModalOverlay.classList.contains("is-open")) renderSyncModal();
     updateSyncLabel();
-    renderAuthGate();
+    renderBootGate();
   }
 
   function setIgStatus(status, message, count) {
@@ -1196,20 +1413,20 @@
   }
 
   function scheduleCloudPush() {
-    if (!cloud.client || !cloud.user || !cloud.pulledOnce) return;
+    if (!cloud.client || !cloud.pulledOnce) return;
     clearTimeout(cloud.pushTimer);
     cloud.pushTimer = setTimeout(pushToCloud, 350);
   }
 
   function pushToCloud() {
     // אף פעם לא דוחפים לפני שמשכנו — אחרת מכשיר ריק היה מוחק את הענן
-    if (!cloud.client || !cloud.user || !cloud.pulledOnce) return;
+    if (!cloud.client || !cloud.pulledOnce) return;
     if (cloud.pushing) { cloud.pendingPush = true; return; }
     cloud.pushing = true;
     setCloudStatus("working", "שומר בענן…");
     cloud.client
       .from(SUPABASE_TABLE)
-      .upsert({ user_id: cloud.user.id, data: state, updated_at: new Date().toISOString() })
+      .upsert({ id: BOARD_ID, data: state, updated_at: new Date().toISOString() })
       .then(function (res) {
         cloud.pushing = false;
         if (res && res.error) { setCloudStatus("error", "השמירה בענן נכשלה: " + res.error.message); return; }
@@ -1224,7 +1441,7 @@
   // background=true הוא רענון שקט של לשונית שחזרה לפוקוס: בלי מסך טעינה,
   // ובלי לבנות מחדש את הלוח אם לא באמת הגיע משהו חדש מהענן.
   function pullFromCloud(background) {
-    if (!cloud.client || !cloud.user) return;
+    if (!cloud.client) return;
     if (cloud.pulling) return;
     cloud.pulling = true;
     // בלי זה בקשה שנתקעת משאירה את השער על "טוען…" בלי סוף ובלי הסבר
@@ -1238,38 +1455,20 @@
     cloud.client
       .from(SUPABASE_TABLE)
       .select("data")
-      .eq("user_id", cloud.user.id)
+      .eq("id", BOARD_ID)
       .maybeSingle()
       .then(function (res) {
         cloud.pulling = false;
         clearTimeout(cloud.pullWatchdog);
-        if (res && res.error) { setCloudStatus("error", "המשיכה מהענן נכשלה: " + res.error.message); return; }
-        var remote = res && res.data ? res.data.data : null;
-        var firstPull = !cloud.pulledOnce;
-        if (looksLikeBoard(remote)) {
-          var localOnly = countMissingItems(remote, state);
-          var before = JSON.stringify(state);
-          applyState(mergeStates(remote, state));
+        try {
+          applyPulledBoard(res);
+        } catch (e) {
+          // מסך הטעינה נסגר רק דרך setCloudStatus, אז חריגה באמצע הציור הותירה
+          // אותו פתוח לנצח — בלי גישה אפילו לשחזור מגיבוי. פותחים ומדווחים.
           cloud.pulledOnce = true;
-          if (JSON.stringify(state) !== before) {
-            persistLocal();
-            rerenderAll();
-          } else if (firstPull) {
-            rerenderAll();
-          }
-          if (localOnly > 0) {
-            setCloudStatus("working", "מעלה " + localOnly + " פריטים מהמכשיר הזה…");
-            pushToCloud();
-          } else {
-            setCloudStatus("synced", "");
-          }
-        } else {
-          // אין עדיין לוח בענן — מעלים את מה שיש במכשיר הזה
-          cloud.pulledOnce = true;
-          pushToCloud();
+          setCloudStatus("error", "הלוח שהגיע מהענן לא נטען: " + ((e && e.message) || "שגיאה") +
+            ". אפשר לעבוד מקומית ולשחזר מגיבוי.");
         }
-        // הרילז לא משתנים תוך כדי עבודה, ולכן נמשכים פעם אחת לטעינה ולא בכל רענון
-        if (firstPull) syncIgFromCloud(true);
       }, function (e) {
         cloud.pulling = false;
         clearTimeout(cloud.pullWatchdog);
@@ -1277,21 +1476,52 @@
       });
   }
 
-  // נתוני הרילז יושבים בטבלה נפרדת מאחורי ההתחברות, ולא בקובץ הפומבי
+  function applyPulledBoard(res) {
+    if (res && res.error) { setCloudStatus("error", "המשיכה מהענן נכשלה: " + res.error.message); return; }
+    var remote = res && res.data ? res.data.data : null;
+    var firstPull = !cloud.pulledOnce;
+    if (looksLikeBoard(remote)) {
+      var localOnly = countMissingItems(remote, state);
+      var before = JSON.stringify(state);
+      applyState(mergeStates(remote, state));
+      cloud.pulledOnce = true;
+      if (JSON.stringify(state) !== before) {
+        persistLocal();
+        rerenderAll();
+      } else if (firstPull) {
+        rerenderAll();
+      }
+      if (localOnly > 0) {
+        setCloudStatus("working", "מעלה " + localOnly + " פריטים מהמכשיר הזה…");
+        pushToCloud();
+      } else {
+        setCloudStatus("synced", "");
+      }
+    } else {
+      // אין עדיין לוח בענן — מעלים את מה שיש במכשיר הזה
+      cloud.pulledOnce = true;
+      pushToCloud();
+    }
+    // הרילז לא משתנים תוך כדי עבודה, ולכן נמשכים פעם אחת לטעינה ולא בכל רענון
+    if (firstPull) syncIgFromCloud(true);
+  }
+
+  // נתוני הרילז יושבים בטבלה נפרדת ולא בקובץ הפומבי — כך הקובץ נשאר קטן,
+  // והמקור לשניהם הוא הענן
   function uploadIgToCloud() {
     var embedded = window.IG_IMPORT_DATA;
     if (!embedded || !Array.isArray(embedded.posts)) {
       setIgStatus("error", "אין נתוני רילז מוטמעים בקובץ הזה להעלאה.");
       return;
     }
-    if (!cloud.client || !cloud.user) {
-      setIgStatus("error", "צריך להיות מחובר כדי להעלות.");
+    if (!cloud.client) {
+      setIgStatus("error", "הסנכרון לא זמין כרגע.");
       return;
     }
     setIgStatus("uploading", "מעלה " + embedded.posts.length + " רילז…");
     cloud.client
       .from(SUPABASE_IG_TABLE)
-      .upsert({ user_id: cloud.user.id, data: embedded, updated_at: new Date().toISOString() })
+      .upsert({ id: BOARD_ID, data: embedded, updated_at: new Date().toISOString() })
       .then(function (up) {
         if (up && up.error) {
           setIgStatus("error", "ההעלאה נכשלה: " + up.error.message +
@@ -1306,12 +1536,12 @@
   }
 
   function syncIgFromCloud(autoUpload) {
-    if (!cloud.client || !cloud.user) return;
+    if (!cloud.client) return;
     setIgStatus("checking", "");
     cloud.client
       .from(SUPABASE_IG_TABLE)
       .select("data")
-      .eq("user_id", cloud.user.id)
+      .eq("id", BOARD_ID)
       .maybeSingle()
       .then(function (res) {
         if (res && res.error) {
@@ -1336,22 +1566,6 @@
       });
   }
 
-  function onAuthChanged(session) {
-    var nextUser = session && session.user ? session.user : null;
-    var prevId = cloud.user ? cloud.user.id : null;
-    var nextId = nextUser ? nextUser.id : null;
-    var sameUser = nextId === prevId;
-    cloud.user = nextUser;
-    if (syncModalOverlay.classList.contains("is-open")) renderSyncModal();
-    // Supabase יורה על האירוע הזה גם ב-INITIAL_SESSION וגם בכל רענון טוקן.
-    // קודם כל אירוע כזה אִפֵּס את pulledOnce, סגר את הלוח מאחורי שער הטעינה
-    // ומשך הכול מחדש. אותו משתמש שכבר נמשך = אין מה לעשות.
-    if (sameUser && (cloud.pulledOnce || cloud.pulling)) return;
-    cloud.pulledOnce = false;
-    if (nextId) pullFromCloud();
-    else if (!sameUser || cloud.status !== "signed-out") setCloudStatus("signed-out", "");
-  }
-
   function initCloud() {
     if (!cloud.configured) { setCloudStatus("off", ""); return; }
     setCloudStatus("loading", "");
@@ -1362,11 +1576,11 @@
         setCloudStatus("error", "ספריית הסנכרון לא נטענה — הלוח ממשיך לעבוד מקומית.");
         return;
       }
-      cloud.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-      cloud.client.auth.onAuthStateChange(function (event, session) { onAuthChanged(session); });
-      cloud.client.auth.getSession().then(function (res) {
-        onAuthChanged(res && res.data ? res.data.session : null);
+      // בלי auth: הלקוח נוצר עם המפתח הפומבי ומושך ישר את השורה המשותפת
+      cloud.client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false }
       });
+      pullFromCloud();
     };
     script.onerror = function () {
       setCloudStatus("error", "טעינת ספריית הסנכרון נכשלה — הלוח ממשיך לעבוד מקומית, והנתונים נשמרים בדפדפן.");
@@ -1374,21 +1588,10 @@
     document.head.appendChild(script);
   }
 
-  // ---------- שער התחברות ----------
-  // הלוח לא נפתח לעריכה לפני שיש חשבון מחובר ומשיכה ראשונה מהענן.
-  // זו ההגנה המרכזית: אי אפשר להזין תוכן שנשמר רק בדפדפן ואובד בניקוי קאש.
-  function authMessage(text, isError) {
-    if (!authMsgEl) return;
-    authMsgEl.textContent = text || "";
-    authMsgEl.classList.toggle("is-visible", !!text);
-    authMsgEl.classList.toggle("is-error", !!isError);
-  }
-
   function updateSyncLabel() {
     if (!syncLabelEl) return;
     var text = "", cls = "sync-label";
     if (!cloud.configured) { text = ""; }
-    else if (!cloud.user) { text = "לא מחובר"; cls += " is-error"; }
     else if (cloud.status === "error") { text = "שגיאת שמירה"; cls += " is-error"; }
     else if (cloud.status === "working" || cloud.pushing) { text = "שומר…"; }
     else if (cloud.status === "synced") { text = "נשמר"; cls += " is-saved"; }
@@ -1396,129 +1599,15 @@
     syncLabelEl.className = cls;
   }
 
-  // setCloudStatus קורא לפונקציה הזאת בכל שינוי מצב. בלי החתימה הזאת היא בנתה
-  // מחדש את גוף השער בכל פעם — כולל focus() שגנב את הסמן מאמצע העבודה.
-  var authGateSig = "";
-
-  function renderAuthGate() {
-    if (!authGateEl) return;
-    var needsGate = cloud.configured && (!cloud.user || !cloud.pulledOnce);
-    authGateEl.classList.toggle("is-open", needsGate);
-    if (!needsGate) {
-      if (authGateSig !== "closed") { authBodyEl.innerHTML = ""; authGateSig = "closed"; }
-      return;
-    }
-
-    // כשל במשיכה השאיר קודם מסך "טוען את הלוח שלך מהענן…" נצחי: ההודעה נכתבה
-    // ל-cloud.message אבל אף פעם לא הוצגה, ולא היה שום כפתור לצאת מזה.
-    if (cloud.user && cloud.status === "error") {
-      if (authGateSig !== "error") {
-        authBodyEl.innerHTML = "";
-        var errActions = document.createElement("div");
-        errActions.className = "auth-actions";
-        var retryBtn = document.createElement("button");
-        retryBtn.type = "button";
-        retryBtn.className = "btn btn-primary";
-        retryBtn.textContent = "נסו שוב";
-        retryBtn.addEventListener("click", function () { authMessage(""); pullFromCloud(); });
-        var outBtn = document.createElement("button");
-        outBtn.type = "button";
-        outBtn.className = "btn btn-ghost";
-        outBtn.textContent = "התנתקות";
-        outBtn.addEventListener("click", function () { if (cloud.client) cloud.client.auth.signOut(); });
-        errActions.appendChild(retryBtn);
-        errActions.appendChild(outBtn);
-        authBodyEl.appendChild(errActions);
-        authGateSig = "error";
-      }
-      authMessage(cloud.message || "הסנכרון נכשל.", true);
-      return;
-    }
-
-    // מחובר אבל עוד לא נמשך — מסך המתנה, בלי טופס
-    if (cloud.user || cloud.status === "loading") {
-      var busyText = cloud.user ? "טוען את הלוח שלך מהענן…" : "מתחבר…";
-      if (authGateSig !== "busy:" + busyText) {
-        authBodyEl.innerHTML = "";
-        var busy = document.createElement("div");
-        busy.className = "auth-busy";
-        busy.textContent = busyText;
-        authBodyEl.appendChild(busy);
-        authGateSig = "busy:" + busyText;
-      }
-      if (cloud.status !== "error") authMessage("");
-      return;
-    }
-
-    if (authGateSig === "form" || authBodyEl.querySelector("input")) return;   // לא לדרוס הקלדה באמצע
-    authBodyEl.innerHTML = "";
-    authGateSig = "form";
-    authIntroEl.textContent = "מתחברים פעם אחת בכל מכשיר. מרגע זה כל שינוי נשמר בענן אוטומטית, וניקוי הדפדפן לא מוחק כלום.";
-
-    var emailInput = document.createElement("input");
-    emailInput.type = "email";
-    emailInput.className = "text-input";
-    emailInput.placeholder = "you@example.com";
-    emailInput.dir = "ltr";
-    emailInput.autocomplete = "username";
-
-    var passInput = document.createElement("input");
-    passInput.type = "password";
-    passInput.className = "text-input";
-    passInput.placeholder = "סיסמה (לפחות 6 תווים)";
-    passInput.dir = "ltr";
-    passInput.autocomplete = "current-password";
-
-    var actions = document.createElement("div");
-    actions.className = "auth-actions";
-    var signInBtn = document.createElement("button");
-    signInBtn.type = "button";
-    signInBtn.className = "btn btn-primary";
-    signInBtn.textContent = "התחברות";
-    var signUpBtn = document.createElement("button");
-    signUpBtn.type = "button";
-    signUpBtn.className = "btn btn-ghost";
-    signUpBtn.textContent = "יצירת חשבון";
-
-    function attempt(mode, btn, label) {
-      var email = emailInput.value.trim();
-      var pass = passInput.value;
-      if (!email || email.indexOf("@") < 0) { authMessage("צריך כתובת מייל תקינה.", true); emailInput.focus(); return; }
-      if (!pass || pass.length < 6) { authMessage("הסיסמה צריכה להיות באורך 6 תווים לפחות.", true); passInput.focus(); return; }
-      btn.disabled = true; signInBtn.disabled = true; signUpBtn.disabled = true;
-      btn.textContent = "רגע…";
-      authMessage("");
-      var call = mode === "signup"
-        ? cloud.client.auth.signUp({ email: email, password: pass })
-        : cloud.client.auth.signInWithPassword({ email: email, password: pass });
-      call.then(function (res) {
-        btn.disabled = false; signInBtn.disabled = false; signUpBtn.disabled = false;
-        btn.textContent = label;
-        if (res && res.error) {
-          authMessage((mode === "signup" ? "יצירת החשבון נכשלה: " : "ההתחברות נכשלה: ") + res.error.message, true);
-          return;
-        }
-        // חשבון נוצר בלי סשן = אימות מייל דלוק. חייבים לומר את זה במפורש ולא להמשיך.
-        if (res && res.data && res.data.user && !res.data.session) {
-          authMessage("החשבון נוצר אבל ההתחברות לא הושלמה, כי ב-Supabase דלוק אימות מייל. כבו את Confirm email תחת Authentication → Sign In / Providers → Email, ואז התחברו. עד אז הלוח לא ייפתח — כדי שלא תזינו תוכן שלא נשמר בשום מקום.", true);
-        }
-      }, function (e) {
-        btn.disabled = false; signInBtn.disabled = false; signUpBtn.disabled = false;
-        btn.textContent = label;
-        authMessage("ההתחברות נכשלה: " + (e && e.message ? e.message : "שגיאה לא ידועה"), true);
-      });
-    }
-
-    signInBtn.addEventListener("click", function () { attempt("signin", signInBtn, "התחברות"); });
-    signUpBtn.addEventListener("click", function () { attempt("signup", signUpBtn, "יצירת חשבון"); });
-    passInput.addEventListener("keydown", function (e) { if (e.key === "Enter") attempt("signin", signInBtn, "התחברות"); });
-
-    actions.appendChild(signInBtn);
-    actions.appendChild(signUpBtn);
-    authBodyEl.appendChild(emailInput);
-    authBodyEl.appendChild(passInput);
-    authBodyEl.appendChild(actions);
-    emailInput.focus();
+  // ---------- מסך טעינה ----------
+  // אין יותר שער התחברות, אבל הכוונה המקורית נשמרת: לא נותנים להקליד תוכן
+  // לתוך לוח שעוד לא נמשך מהענן, כדי שלא ייווצר מצב של עריכה על עותק ריק.
+  // אם המשיכה נכשלה המסך נפתח בכל זאת — עבודה מקומית עדיפה על מסך תקוע,
+  // והמיזוג בכל מקרה תוספתי ולא מוחק כלום.
+  function renderBootGate() {
+    if (!bootGateEl) return;
+    var booting = cloud.configured && !cloud.pulledOnce && cloud.status !== "error";
+    bootGateEl.classList.toggle("is-open", booting);
   }
 
   // ---------- sync modal ----------
@@ -1553,139 +1642,49 @@
       syncCloudBodyEl.appendChild(errNote);
     }
 
-    if (cloud.user) {
-      var who = document.createElement("p");
-      who.className = "sync-note";
-      who.textContent = "מחוברים כ־" + (cloud.user.email || "משתמש") + ". כל שינוי נשמר אוטומטית, וכל מכשיר שתתחברו בו יראה את אותו לוח.";
-      syncCloudBodyEl.appendChild(who);
+    var who = document.createElement("p");
+    who.className = "sync-note";
+    who.textContent = "הלוח משותף: כל מי שפותח את הכתובת הזאת רואה ועורך את אותו לוח, בלי התחברות. כל שינוי נשמר אוטומטית בענן.";
+    syncCloudBodyEl.appendChild(who);
 
-      var igBox = document.createElement("div");
-      igBox.className = "import-preview";
-      var igText = document.createElement("p");
-      igText.className = "import-preview-text";
-      var igLabels = {
-        unknown: "נתוני רילז: טרם נבדק.",
-        checking: "בודק אם נתוני הרילז נמצאים בענן…",
-        present: "נתוני הרילז בענן ✓ (" + cloud.igCount + " רילז). הם נטענים מכאן ולא מהקובץ הפומבי.",
-        missing: "נתוני הרילז עדיין לא בענן. אפשר להעלות אותם מהקובץ עכשיו.",
-        uploading: cloud.igMessage || "מעלה…",
-        error: "שגיאה: " + cloud.igMessage
-      };
-      igText.textContent = igLabels[cloud.igStatus] || igLabels.unknown;
-      if (cloud.igStatus === "error") igText.style.color = "var(--danger)";
-      igBox.appendChild(igText);
+    var igBox = document.createElement("div");
+    igBox.className = "import-preview";
+    var igText = document.createElement("p");
+    igText.className = "import-preview-text";
+    var igLabels = {
+      unknown: "נתוני רילז: טרם נבדק.",
+      checking: "בודק אם נתוני הרילז נמצאים בענן…",
+      present: "נתוני הרילז בענן ✓ (" + cloud.igCount + " רילז). הם נטענים מכאן ולא מהקובץ הפומבי.",
+      missing: "נתוני הרילז עדיין לא בענן. אפשר להעלות אותם מהקובץ עכשיו.",
+      uploading: cloud.igMessage || "מעלה…",
+      error: "שגיאה: " + cloud.igMessage
+    };
+    igText.textContent = igLabels[cloud.igStatus] || igLabels.unknown;
+    if (cloud.igStatus === "error") igText.style.color = "var(--danger)";
+    igBox.appendChild(igText);
 
+    if (cloud.igStatus === "error" || cloud.igStatus === "missing") {
       var igActions = document.createElement("div");
       igActions.className = "backup-actions";
-      if (cloud.igStatus === "error" || cloud.igStatus === "missing") {
-        var igRetryBtn = document.createElement("button");
-        igRetryBtn.type = "button";
-        igRetryBtn.className = "btn btn-ghost";
-        igRetryBtn.textContent = "ניסיון חוזר";
-        igRetryBtn.addEventListener("click", function () { syncIgFromCloud(true); });
-        igActions.appendChild(igRetryBtn);
-        igBox.appendChild(igActions);
-      }
-      syncCloudBodyEl.appendChild(igBox);
-
-      var actions = document.createElement("div");
-      actions.className = "backup-actions";
-      var syncNowBtn = document.createElement("button");
-      syncNowBtn.type = "button";
-      syncNowBtn.className = "btn btn-ghost";
-      syncNowBtn.textContent = "סנכרון עכשיו";
-      syncNowBtn.addEventListener("click", pullFromCloud);
-      var signOutBtn = document.createElement("button");
-      signOutBtn.type = "button";
-      signOutBtn.className = "btn btn-ghost";
-      signOutBtn.textContent = "התנתקות";
-      signOutBtn.addEventListener("click", function () {
-        cloud.client.auth.signOut().then(function () { setCloudStatus("signed-out", ""); });
-      });
-      actions.appendChild(syncNowBtn);
-      actions.appendChild(signOutBtn);
-      syncCloudBodyEl.appendChild(actions);
-      return;
+      var igRetryBtn = document.createElement("button");
+      igRetryBtn.type = "button";
+      igRetryBtn.className = "btn btn-ghost";
+      igRetryBtn.textContent = "ניסיון חוזר";
+      igRetryBtn.addEventListener("click", function () { syncIgFromCloud(true); });
+      igActions.appendChild(igRetryBtn);
+      igBox.appendChild(igActions);
     }
+    syncCloudBodyEl.appendChild(igBox);
 
-    var intro = document.createElement("p");
-    intro.className = "sync-note";
-    intro.textContent = "התחברו עם מייל וסיסמה. בפעם הראשונה בכל מכשיר מתחברים פעם אחת, ומשם הלוח מסונכרן אוטומטית.";
-    syncCloudBodyEl.appendChild(intro);
-
-    var emailInput = document.createElement("input");
-    emailInput.type = "email";
-    emailInput.className = "text-input";
-    emailInput.placeholder = "you@example.com";
-    emailInput.dir = "ltr";
-    emailInput.autocomplete = "username";
-
-    var passInput = document.createElement("input");
-    passInput.type = "password";
-    passInput.className = "text-input";
-    passInput.placeholder = "סיסמה (לפחות 6 תווים)";
-    passInput.dir = "ltr";
-    passInput.autocomplete = "current-password";
-    passInput.style.marginTop = "8px";
-
-    var authActions = document.createElement("div");
-    authActions.className = "backup-actions";
-    authActions.style.marginTop = "10px";
-
-    function authAttempt(mode, btn, label) {
-      var email = emailInput.value.trim();
-      var pass = passInput.value;
-      if (!email || email.indexOf("@") < 0) { emailInput.focus(); return; }
-      if (!pass || pass.length < 6) {
-        setCloudStatus("error", "הסיסמה צריכה להיות באורך 6 תווים לפחות.");
-        passInput.focus();
-        return;
-      }
-      btn.disabled = true;
-      btn.textContent = "רגע…";
-      var call = mode === "signup"
-        ? cloud.client.auth.signUp({ email: email, password: pass })
-        : cloud.client.auth.signInWithPassword({ email: email, password: pass });
-      call.then(function (res) {
-        btn.disabled = false;
-        btn.textContent = label;
-        if (res && res.error) {
-          setCloudStatus("error", (mode === "signup" ? "יצירת החשבון נכשלה: " : "ההתחברות נכשלה: ") + res.error.message);
-          return;
-        }
-        if (mode === "signup" && res && res.data && res.data.user && !res.data.session) {
-          setCloudStatus("signed-out", "החשבון נוצר, אבל נדרש אימות מייל. כבו את Confirm email בהגדרות Supabase והתחברו שוב.");
-          return;
-        }
-        // onAuthStateChange כבר יטפל במשיכה ובסנכרון
-      }, function (e) {
-        btn.disabled = false;
-        btn.textContent = label;
-        setCloudStatus("error", "ההתחברות נכשלה: " + (e && e.message ? e.message : "שגיאה לא ידועה"));
-      });
-    }
-
-    var signInBtn = document.createElement("button");
-    signInBtn.type = "button";
-    signInBtn.className = "btn btn-primary";
-    signInBtn.textContent = "התחברות";
-    signInBtn.addEventListener("click", function () { authAttempt("signin", signInBtn, "התחברות"); });
-
-    var signUpBtn = document.createElement("button");
-    signUpBtn.type = "button";
-    signUpBtn.className = "btn btn-ghost";
-    signUpBtn.textContent = "יצירת חשבון";
-    signUpBtn.addEventListener("click", function () { authAttempt("signup", signUpBtn, "יצירת חשבון"); });
-
-    passInput.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") authAttempt("signin", signInBtn, "התחברות");
-    });
-
-    authActions.appendChild(signInBtn);
-    authActions.appendChild(signUpBtn);
-    syncCloudBodyEl.appendChild(emailInput);
-    syncCloudBodyEl.appendChild(passInput);
-    syncCloudBodyEl.appendChild(authActions);
+    var actions = document.createElement("div");
+    actions.className = "backup-actions";
+    var syncNowBtn = document.createElement("button");
+    syncNowBtn.type = "button";
+    syncNowBtn.className = "btn btn-ghost";
+    syncNowBtn.textContent = "סנכרון עכשיו";
+    syncNowBtn.addEventListener("click", function () { pullFromCloud(); });
+    actions.appendChild(syncNowBtn);
+    syncCloudBodyEl.appendChild(actions);
   }
 
   function openSyncModal() {
@@ -1693,7 +1692,7 @@
     lockScroll();
     importPreviewEl.innerHTML = "";
     renderSyncModal();
-    if (cloud.user && (cloud.igStatus === "unknown" || cloud.igStatus === "error")) syncIgFromCloud(false);
+    if (cloud.client && (cloud.igStatus === "unknown" || cloud.igStatus === "error")) syncIgFromCloud(false);
   }
   function closeSyncModal() {
     syncModalOverlay.classList.remove("is-open");
@@ -1710,10 +1709,7 @@
   var legendEl = document.getElementById("legendRow");
   var progressLegendEl = document.getElementById("progressLegend");
   var hintEl = document.getElementById("hintText");
-  var authGateEl = document.getElementById("authGate");
-  var authBodyEl = document.getElementById("authBody");
-  var authMsgEl = document.getElementById("authMsg");
-  var authIntroEl = document.getElementById("authIntro");
+  var bootGateEl = document.getElementById("bootGate");
   var syncLabelEl = document.getElementById("syncLabel");
   var calendarGridEl = document.getElementById("calendarGrid");
 
@@ -3019,7 +3015,7 @@
   var lastBackgroundPull = 0;
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState !== "visible") return;
-    if (!cloud.user || !cloud.pulledOnce || cloud.pushing || cloud.pulling) return;
+    if (!cloud.client || !cloud.pulledOnce || cloud.pushing || cloud.pulling) return;
     var now = Date.now();
     if (now - lastBackgroundPull < 60000) return;
     lastBackgroundPull = now;
@@ -3036,9 +3032,712 @@
     }
   })();
 
-  renderAuthGate();
+
+  // ==========================================================================
+  //  מסך ניתוח הרילז
+  //  כל המדדים מחושבים כאן מהנתונים הגולמיים, ולא נשמרים — כך שינוי פרמטר
+  //  מצייר מחדש מיד ובלי לפנות לרשת.
+  // ==========================================================================
+  var analyticsViewEl = document.getElementById("analyticsView");
+  var calendarWrapEl = document.getElementById("calendarWrap");
+  var boardHeaderBitsEl = document.getElementById("boardHeaderBits");
+  var tabBoardEl = document.getElementById("tabBoard");
+  var tabAnalyticsEl = document.getElementById("tabAnalytics");
+  var igControlsEl = document.getElementById("igControls");
+  var igAnalysisBodyEl = document.getElementById("igAnalysisBody");
+  var igRefreshBtn = document.getElementById("igRefreshBtn");
+  var igFullRefreshBtn = document.getElementById("igFullRefreshBtn");
+  var igRefreshStatusEl = document.getElementById("igRefreshStatus");
+  var igRefreshLogEl = document.getElementById("igRefreshLog");
+
+  var activeView = "board";
+  var igRefreshBusy = false;
+
+  var PLACEHOLDER_THUMB =
+    "data:image/svg+xml;utf8," +
+    encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80"><rect width="80" height="80" fill="#d8d5cc"/></svg>');
+
+  // ---------- עזרי חישוב ----------
+  function num(v) {
+    if (v === null || v === undefined || v === "") return null;
+    var n = typeof v === "number" ? v : Number(v);
+    return isFinite(n) ? n : null;
+  }
+
+  function median(values) {
+    if (!values.length) return null;
+    var sorted = values.slice().sort(function (a, b) { return a - b; });
+    var mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+  }
+
+  function percentile(values, p) {
+    if (!values.length) return null;
+    var sorted = values.slice().sort(function (a, b) { return a - b; });
+    var idx = (p / 100) * (sorted.length - 1);
+    var lo = Math.floor(idx);
+    var hi = Math.ceil(idx);
+    if (lo === hi) return sorted[lo];
+    return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+  }
+
+  // 0–100 ביחס לשאר הרילז בחלון — ציר הוא תמיד השוואה, לא ערך מוחלט.
+  //
+  // דירוג אחוזוני ולא מתיחה בין המינימום למקסימום: ריל חריג אחד עם פי שישה
+  // חשיפה מועך את כל השאר לאפס, וכך רוב הרילז מקבלים "חלש בכל הצירים" רק
+  // בגלל ההצלחה הבודדת. דירוג אומר מה שהאבחנה באמת שואלת — איפה הריל הזה
+  // עומד מול האחרים שלכם.
+  function normalizeAxis(values) {
+    var present = values.filter(function (v) { return v !== null; });
+    if (!present.length) return values.map(function () { return null; });
+    if (present.length === 1) return values.map(function (v) { return v === null ? null : 100; });
+    return values.map(function (v) {
+      if (v === null) return null;
+      var below = 0, equal = 0;
+      present.forEach(function (x) {
+        if (x < v) below++;
+        else if (x === v) equal++;
+      });
+      return ((below + equal / 2) / present.length) * 100;
+    });
+  }
+
+  function safeDiv(a, b) {
+    if (a === null || b === null || b <= 0) return null;
+    return a / b;
+  }
+
+  function fmtInt(n) { return n === null ? "—" : Math.round(n).toLocaleString("he-IL"); }
+  function fmtOne(n) { return n === null ? "—" : (Math.round(n * 10) / 10).toLocaleString("he-IL"); }
+  function fmtPct(n) { return n === null ? "—" : Math.round(n) + "%"; }
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  }
+
+  // ---------- מילים בכיתובים ----------
+  // רשימת מילות הקישור בעברית — בלעדיה "המילים המנצחות" הן רק ו', ש' ו"את".
+  var IG_STOPWORDS = ("את של על לא זה זו זאת אני אתה את אנחנו הם הן הוא היא יש אין אם כי אבל גם רק כל מה מי איך למה מתי " +
+    "עם או כדי יותר פחות כבר אחרי לפני הזה הזאת האלה שלי שלך שלו שלה שלנו להיות אפשר צריך ככה כאן שם בלי עוד תמיד אף פעם " +
+    "כמו בין תוך אחד אחת שתי שני הכי ואז אז כן ולא וגם עד מאוד ממש פשוט בדיוק באמת דבר משהו מישהו כלום הרבה קצת " +
+    "the and for you your with this that have from are was were will just not but all can get got out one more most very like").split(/\s+/);
+  var IG_STOPWORD_SET = {};
+  IG_STOPWORDS.forEach(function (w) { if (w) IG_STOPWORD_SET[w] = true; });
+
+  function tokenizeCaption(caption) {
+    var words = String(caption || "")
+      .toLowerCase()
+      .replace(/https?:\/\/\S+/g, " ")
+      .replace(/[@#]/g, " ")
+      // עברית, לטינית וספרות — כל השאר מפריד
+      .replace(/[^֐-׿a-z0-9\s']/g, " ")
+      .split(/\s+/)
+      .filter(function (w) { return w.length >= 3 && !IG_STOPWORD_SET[w]; });
+    var set = {};
+    words.forEach(function (w) { set[w] = true; });
+    return set;
+  }
+
+  // מילה נחשבת סימן היכר רק אם היא חוזרת בשני רילז מובילים ולא מופיעה באף נופל
+  function captionPatterns(top, bottom) {
+    var topSets = top.map(function (p) { return tokenizeCaption(p.caption); });
+    var bottomSets = bottom.map(function (p) { return tokenizeCaption(p.caption); });
+    function freq(sets, word) {
+      return sets.filter(function (s) { return s[word]; }).length;
+    }
+    function vocab(sets) {
+      var all = {};
+      sets.forEach(function (s) { Object.keys(s).forEach(function (w) { all[w] = true; }); });
+      return Object.keys(all);
+    }
+    var winners = vocab(topSets).filter(function (w) {
+      return freq(topSets, w) >= 2 && freq(bottomSets, w) === 0;
+    }).sort(function (a, b) { return freq(topSets, b) - freq(topSets, a); });
+    var flops = vocab(bottomSets).filter(function (w) {
+      return freq(bottomSets, w) >= 2 && freq(topSets, w) === 0;
+    }).sort(function (a, b) { return freq(bottomSets, b) - freq(bottomSets, a); });
+    return { winners: winners.slice(0, 12), flops: flops.slice(0, 12) };
+  }
+
+  // ---------- האבחנה ----------
+  function diagnose(hookAxis, reachAxis, viralAxis) {
+    if (hookAxis === null || reachAxis === null || viralAxis === null) {
+      return { label: "אין מספיק נתונים", tone: "", mismatch: false };
+    }
+    var hook = hookAxis >= 50, reach = reachAxis >= 50, viral = viralAxis >= 50;
+    if (hook && reach && viral) return { label: "מנצח — שלושת הצירים עבדו", tone: "is-green", mismatch: false };
+    if (!hook && !reach && !viral) return { label: "חלש בכל הצירים — לוותר על הפורמט", tone: "is-red", mismatch: false };
+    if (hook && !reach) return { label: "הוק חזק, אינסטגרם לא דחף", tone: "is-amber", mismatch: true };
+    if (!hook && reach) return { label: "נכנסו, אבל לא נשארו", tone: "is-amber", mismatch: true };
+    if (!hook && viral) return { label: "רעיון משתף, ביצוע חלש", tone: "is-amber", mismatch: true };
+    if (hook && reach && !viral) return { label: "ההוק עבד", tone: "is-green", mismatch: false };
+    return { label: "מתחת לממוצע", tone: "", mismatch: false };
+  }
+
+  // ---------- הניתוח כולו ----------
+  function analyzeReels() {
+    var cfg = state.igSettings;
+    var cutoff = Date.now() - cfg.windowDays * 86400000;
+
+    var posts = (igData.posts || []).filter(function (p) {
+      if (!p || !p.date) return false;
+      return parseKey(p.date).getTime() >= cutoff;
+    }).map(function (p) {
+      var watchS = num(p.watchTimeS);
+      var reach = num(p.reach);
+      var durationS = num(p.durationS);
+      var sharePct = reach ? ((num(p.shares) || 0) / reach) * 100 : null;
+      var savePct = reach ? ((num(p.saved) || 0) / reach) * 100 : null;
+      return {
+        id: p.id,
+        date: p.date,
+        caption: p.caption || "",
+        permalink: p.permalink || null,
+        thumb: p.thumb || p.thumbUrl || null,
+        reach: reach,
+        views: num(p.views),
+        likes: num(p.likes),
+        comments: num(p.comments),
+        shares: num(p.shares),
+        saved: num(p.saved),
+        totalInteractions: num(p.totalInteractions),
+        watchTimeS: watchS,
+        durationS: durationS,
+        // כמה מהסרטון נצפה בממוצע — דורש את אורך הסרטון, שאין לייבוא הישן
+        hookRate: safeDiv(watchS, durationS),
+        replayRate: safeDiv(num(p.views), reach),
+        sharePct: sharePct,
+        savePct: savePct,
+        hookScore: watchS !== null && reach !== null && reach >= 0
+          ? watchS * Math.sqrt(reach) * (1 + (sharePct || 0) / 100 + (savePct || 0) / 200)
+          : null
+      };
+    });
+
+    var hookAxes = normalizeAxis(posts.map(function (p) { return p.watchTimeS; }));
+    var reachAxes = normalizeAxis(posts.map(function (p) { return p.reach; }));
+    var viralAxes = normalizeAxis(posts.map(function (p) {
+      if (p.shares === null && p.saved === null) return null;
+      return (p.shares || 0) + (p.saved || 0);
+    }));
+    posts.forEach(function (p, i) {
+      p.hookAxis = hookAxes[i];
+      p.reachAxis = reachAxes[i];
+      p.viralAxis = viralAxes[i];
+      p.diagnosis = diagnose(hookAxes[i], reachAxes[i], viralAxes[i]);
+    });
+
+    function byMetric(key) {
+      return posts.slice().sort(function (a, b) {
+        var av = a[key], bv = b[key];
+        if (av === null && bv === null) return 0;
+        if (av === null) return 1;
+        if (bv === null) return -1;
+        return bv - av;
+      });
+    }
+
+    var byScore = byMetric("hookScore");
+    var scored = byScore.filter(function (p) { return p.hookScore !== null; });
+
+    var ranked;
+    if (cfg.sort === "date") {
+      ranked = posts.slice().sort(function (a, b) { return String(b.date).localeCompare(String(a.date)); });
+    } else if (cfg.sort === "hookScore") {
+      ranked = byScore;
+    } else {
+      ranked = byMetric(cfg.sort);
+    }
+
+    var top = scored.slice(0, cfg.topN);
+    var bottom = scored.length > cfg.topN ? scored.slice(-cfg.topN).reverse() : [];
+
+    // "לתקן": האריזה עבדה יחסית לאורך הסרטון, אבל בפועל נשארו מעט זמן
+    var hookRates = posts.map(function (p) { return p.hookRate; }).filter(function (v) { return v !== null; });
+    var watchTimes = posts.map(function (p) { return p.watchTimeS; }).filter(function (v) { return v !== null; });
+    var hookP75 = hookRates.length ? percentile(hookRates, 75) : null;
+    var watchP25 = watchTimes.length ? percentile(watchTimes, 25) : null;
+    var fix = (hookP75 === null || watchP25 === null) ? [] : posts.filter(function (p) {
+      return p.hookRate !== null && p.watchTimeS !== null && p.hookRate >= hookP75 && p.watchTimeS <= watchP25;
+    }).sort(function (a, b) { return b.hookRate - a.hookRate; }).slice(0, cfg.topN);
+
+    var reaches = posts.map(function (p) { return p.reach; }).filter(function (v) { return v !== null; });
+    var medianReach = median(reaches);
+    var topReel = scored[0] || ranked[0] || null;
+    var totalReach = reaches.reduce(function (a, b) { return a + b; }, 0);
+    // הכותרת מדברת על חשיפה, ולכן היא לוקחת את הריל הכי נצפה — לא את בעל
+    // ציון ההוק הגבוה. אחרת יצא "0.9× מהחציון", משפט שלא אומר כלום.
+    var reachLeader = byMetric("reach").filter(function (p) { return p.reach !== null; })[0] || null;
+
+    var patternN = Math.min(5, Math.floor(scored.length / 2));
+    var patterns = patternN >= 2
+      ? captionPatterns(scored.slice(0, patternN), scored.slice(-patternN))
+      : { winners: [], flops: [] };
+
+    return {
+      posts: posts,
+      ranked: ranked,
+      top: top,
+      bottom: bottom,
+      fix: fix,
+      topIds: top.reduce(function (m, p) { m[p.id] = true; return m; }, {}),
+      bottomIds: bottom.reduce(function (m, p) { m[p.id] = true; return m; }, {}),
+      patterns: patterns,
+      topReel: topReel,
+      reachLeader: reachLeader,
+      medianReach: medianReach,
+      headlineMultiple: reachLeader && medianReach ? reachLeader.reach / medianReach : null,
+      stats: {
+        reachConcentration: reachLeader && totalReach > 0 ? (reachLeader.reach / totalReach) * 100 : null,
+        watchTimeGap: watchTimes.length ? Math.max.apply(null, watchTimes) - Math.min.apply(null, watchTimes) : null,
+        strongHookCount: posts.filter(function (p) { return p.watchTimeS !== null && p.watchTimeS >= cfg.strongHookS; }).length,
+        replayWinnerCount: posts.filter(function (p) { return p.replayRate !== null && p.replayRate >= cfg.replayRate; }).length,
+        totalReach: totalReach
+      }
+    };
+  }
+
+  // ---------- פרמטרים ----------
+  // נבנים פעם אחת: בנייה מחדש בכל הקלדה הייתה גוזלת את הפוקוס מהשדה
+  var IG_CONTROLS = [
+    { key: "windowDays", label: "חלון ניתוח (ימים)", hint: "רילז ישנים מזה לא נכללים", step: 1 },
+    { key: "strongHookS", label: "סף הוק חזק (שניות)", hint: "מאיזה זמן צפייה ממוצע ריל נחשב חזק", step: 1 },
+    { key: "replayRate", label: "סף צפייה חוזרת", hint: "צפיות חלקי חשיפה שמעליו צפו שוב", step: 0.1 },
+    { key: "topN", label: "כמה בכל עמודה", hint: "אורך הרשימות להמשיך / להפסיק / לתקן", step: 1 },
+    { key: "fetchLimit", label: "פוסטים לשליפה", hint: "כמה למשוך מאינסטגרם בכל עמוד", step: 1 },
+    { key: "refreshDays", label: "רענון מספרים (ימים)", hint: "עד כמה אחורה לעדכן רילז קיימים", step: 1 }
+  ];
+
+  function renderIgControls() {
+    if (igControlsEl.childNodes.length) return;
+
+    IG_CONTROLS.forEach(function (spec) {
+      var bounds = IG_SETTING_BOUNDS[spec.key];
+      var wrap = el("div", "an-control");
+      var label = el("label", null, spec.label);
+      var input = document.createElement("input");
+      input.type = "number";
+      input.min = bounds[0];
+      input.max = bounds[1];
+      input.step = spec.step;
+      input.value = state.igSettings[spec.key];
+      label.setAttribute("for", "igc-" + spec.key);
+      input.id = "igc-" + spec.key;
+
+      // בזמן ההקלדה מצייר מחדש רק אם הערך חוקי; ההצמדה לתחום קורית בסיום
+      input.addEventListener("input", function () {
+        var v = Number(input.value);
+        if (!isFinite(v) || v < bounds[0] || v > bounds[1]) return;
+        state.igSettings[spec.key] = v;
+        renderAnalysisBody();
+      });
+      input.addEventListener("change", function () {
+        var v = Number(input.value);
+        if (!isFinite(v)) v = DEFAULT_IG_SETTINGS[spec.key];
+        v = Math.min(bounds[1], Math.max(bounds[0], v));
+        state.igSettings[spec.key] = v;
+        input.value = v;
+        persist();
+        renderAnalysisBody();
+      });
+
+      wrap.appendChild(label);
+      wrap.appendChild(input);
+      wrap.appendChild(el("span", "an-hint", spec.hint));
+      igControlsEl.appendChild(wrap);
+    });
+
+    var sortWrap = el("div", "an-control");
+    var sortLabel = el("label", null, "מיון הרשימה");
+    sortLabel.setAttribute("for", "igc-sort");
+    var select = document.createElement("select");
+    select.id = "igc-sort";
+    IG_SORTS.forEach(function (s) {
+      var opt = document.createElement("option");
+      opt.value = s.id;
+      opt.textContent = s.name;
+      if (state.igSettings.sort === s.id) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener("change", function () {
+      state.igSettings.sort = select.value;
+      persist();
+      renderAnalysisBody();
+    });
+    sortWrap.appendChild(sortLabel);
+    sortWrap.appendChild(select);
+    sortWrap.appendChild(el("span", "an-hint", "משפיע על הרשימה המלאה בלבד"));
+    igControlsEl.appendChild(sortWrap);
+  }
+
+  // ---------- לבני התצוגה ----------
+  function thumbLink(post, cssClass) {
+    var img = document.createElement("img");
+    img.src = post.thumb || PLACEHOLDER_THUMB;
+    img.alt = "";
+    img.loading = "lazy";
+    img.addEventListener("error", function () { img.src = PLACEHOLDER_THUMB; });
+    var href = safeUrl(post.permalink);
+    if (!href) {
+      if (cssClass) img.className = cssClass;
+      return img;
+    }
+    var a = document.createElement("a");
+    a.href = href;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.appendChild(img);
+    return a;
+  }
+
+  // הקישורים עוברים דרך בסיס נתונים לפני שהם מגיעים לכאן, ולכן נפתחים רק http(s)
+  function safeUrl(url) {
+    if (typeof url !== "string") return null;
+    return /^https?:\/\//i.test(url) ? url : null;
+  }
+
+  function firstLine(caption) {
+    var line = String(caption || "").split("\n")[0].trim();
+    return line || "(בלי כיתוב)";
+  }
+
+  function miniCard(post) {
+    var href = safeUrl(post.permalink);
+    var wrap = href ? document.createElement("a") : el("div");
+    wrap.className = "an-mini";
+    if (href) {
+      wrap.href = href;
+      wrap.target = "_blank";
+      wrap.rel = "noopener noreferrer";
+    }
+    var img = document.createElement("img");
+    img.src = post.thumb || PLACEHOLDER_THUMB;
+    img.alt = "";
+    img.loading = "lazy";
+    img.addEventListener("error", function () { img.src = PLACEHOLDER_THUMB; });
+    var body = el("div", "an-mini-body");
+    body.appendChild(el("p", "an-mini-caption", firstLine(post.caption)));
+    body.appendChild(el("span", "an-mini-score", fmtInt(post.hookScore) + " נק׳ · " + fmtInt(post.reach) + " חשיפה"));
+    wrap.appendChild(img);
+    wrap.appendChild(body);
+    return wrap;
+  }
+
+  function axisRow(name, value, cssVar) {
+    var row = el("div", "an-axis");
+    row.appendChild(el("span", null, name));
+    var track = el("div", "an-axis-track");
+    var fill = el("div", "an-axis-fill");
+    fill.style.width = (value === null ? 0 : Math.max(0, Math.min(100, value))) + "%";
+    fill.style.background = "var(" + cssVar + ")";
+    track.appendChild(fill);
+    row.appendChild(track);
+    row.appendChild(el("span", "an-axis-value", value === null ? "—" : String(Math.round(value))));
+    return row;
+  }
+
+  function rankedRow(post, rank, analysis) {
+    var row = el("article", "an-row");
+    if (analysis.topIds[post.id]) row.className += " is-top";
+    else if (analysis.bottomIds[post.id]) row.className += " is-bottom";
+    else if (post.diagnosis.mismatch) row.className += " is-mismatch";
+
+    row.appendChild(el("span", "an-rank", String(rank)));
+    row.appendChild(thumbLink(post));
+
+    var body = el("div", "an-row-body");
+    var top = el("div", "an-row-top");
+    top.appendChild(el("span", "an-date", post.date));
+    var tag = el("span", "an-tag" + (post.diagnosis.tone ? " " + post.diagnosis.tone : ""), post.diagnosis.label);
+    top.appendChild(tag);
+    body.appendChild(top);
+    body.appendChild(el("p", "an-caption", firstLine(post.caption)));
+
+    var metrics = el("div", "an-metrics");
+    [
+      ["חשיפה", fmtInt(post.reach)],
+      ["צפיות", fmtInt(post.views)],
+      ["זמן צפייה", post.watchTimeS === null ? "—" : fmtOne(post.watchTimeS) + " שנ׳"],
+      ["מעורבות", fmtInt(post.totalInteractions)],
+      ["שיתופים", fmtInt(post.shares)],
+      ["שמירות", fmtInt(post.saved)],
+      ["צפייה חוזרת", post.replayRate === null ? "—" : fmtOne(post.replayRate) + "×"],
+      ["אחוז צפייה", post.hookRate === null ? "—" : fmtPct(post.hookRate * 100)]
+    ].forEach(function (pair) {
+      var span = el("span");
+      span.appendChild(document.createTextNode(pair[0] + " "));
+      span.appendChild(el("b", null, pair[1]));
+      metrics.appendChild(span);
+    });
+    body.appendChild(metrics);
+
+    var axes = el("div", "an-axes");
+    axes.appendChild(axisRow("הוק", post.hookAxis, "--axis-hook"));
+    axes.appendChild(axisRow("חשיפה", post.reachAxis, "--axis-reach"));
+    axes.appendChild(axisRow("ויראליות", post.viralAxis, "--axis-viral"));
+    body.appendChild(axes);
+    row.appendChild(body);
+
+    var score = el("div", "an-score");
+    score.appendChild(el("div", "an-score-num", fmtInt(post.hookScore)));
+    score.appendChild(el("div", "an-score-label", "ציון הוק"));
+    var openHref = safeUrl(post.permalink);
+    if (openHref) {
+      var open = el("a", "an-open", "פתיחה ↗");
+      open.href = openHref;
+      open.target = "_blank";
+      open.rel = "noopener noreferrer";
+      score.appendChild(open);
+    }
+    row.appendChild(score);
+    return row;
+  }
+
+  function panel(cssClass, head, sub, posts, emptyText) {
+    var box = el("div", "an-panel " + cssClass);
+    box.appendChild(el("div", "an-panel-head", head));
+    box.appendChild(el("div", "an-panel-sub", sub));
+    if (!posts.length) {
+      box.appendChild(el("p", "an-note", emptyText));
+    } else {
+      posts.forEach(function (p) { box.appendChild(miniCard(p)); });
+    }
+    return box;
+  }
+
+  function statTile(value, label) {
+    var tile = el("div", "stat-tile");
+    tile.appendChild(el("span", "stat-value", value));
+    tile.appendChild(el("span", "stat-label", label));
+    return tile;
+  }
+
+  // ---------- ציור המסך ----------
+  function renderAnalysisBody() {
+    igAnalysisBodyEl.innerHTML = "";
+
+    if (!igData.posts || !igData.posts.length) {
+      var empty = el("div", "analytics-empty");
+      empty.appendChild(el("p", null, "עדיין אין נתוני רילז."));
+      empty.appendChild(el("p", null, "לחצו על “ניתוח רילז חדשים” למעלה כדי למשוך מאינסטגרם."));
+      igAnalysisBodyEl.appendChild(empty);
+      return;
+    }
+
+    var a = analyzeReels();
+
+    if (!a.posts.length) {
+      var none = el("div", "analytics-empty");
+      none.appendChild(el("p", null, "אין רילז ב-" + state.igSettings.windowDays + " הימים האחרונים."));
+      none.appendChild(el("p", null, "יש " + igData.posts.length + " רילז שמורים — הגדילו את חלון הניתוח כדי לראות אותם."));
+      igAnalysisBodyEl.appendChild(none);
+      return;
+    }
+
+    // כותרת-על
+    var headCard = el("div", "an-card");
+    var head = el("div", "an-headline");
+    if (a.headlineMultiple !== null) {
+      head.appendChild(el("span", "an-headline-big", fmtOne(a.headlineMultiple) + "×"));
+      head.appendChild(el("span", "an-headline-text",
+        "הריל הכי נצפה בחלון הגיע ל-" + fmtInt(a.reachLeader.reach) + " חשיפות — " +
+        fmtOne(a.headlineMultiple) + "× מהחציון שלכם (" + fmtInt(a.medianReach) + ")."));
+    } else {
+      head.appendChild(el("span", "an-headline-text", "אין מספיק נתוני חשיפה כדי לחשב יחס לחציון."));
+    }
+    headCard.appendChild(head);
+    igAnalysisBodyEl.appendChild(headCard);
+
+    // מספרים מהירים
+    var strip = el("div", "stat-strip");
+    strip.appendChild(statTile(a.posts.length + "", "רילז בחלון"));
+    strip.appendChild(statTile(fmtInt(a.stats.totalReach), "חשיפה מצטברת"));
+    strip.appendChild(statTile(a.stats.reachConcentration === null ? "—" : fmtPct(a.stats.reachConcentration), "מהחשיפה הגיעה מריל אחד"));
+    strip.appendChild(statTile(a.stats.watchTimeGap === null ? "—" : fmtOne(a.stats.watchTimeGap) + " שנ׳", "פער זמן צפייה"));
+    strip.appendChild(statTile(a.stats.strongHookCount + "", "הוק חזק (≥" + state.igSettings.strongHookS + " שנ׳)"));
+    strip.appendChild(statTile(a.stats.replayWinnerCount + "", "צפייה חוזרת (≥" + fmtOne(state.igSettings.replayRate) + "×)"));
+    igAnalysisBodyEl.appendChild(strip);
+
+    // מה לעשות עם זה
+    var grid = el("div", "an-grid3");
+    grid.appendChild(panel("is-do", "להמשיך", "הציון הגבוה ביותר — הפורמטים שעובדים", a.top, "עדיין אין מספיק רילז עם נתונים."));
+    grid.appendChild(panel("is-stop", "להפסיק", "הציון הנמוך ביותר בחלון", a.bottom, "צריך יותר רילז כדי להשוות."));
+    grid.appendChild(panel("is-fix", "לתקן", "האריזה עבדה, התוכן לא החזיק", a.fix,
+      "אין פערי אריזה בחלון הזה. (נדרש אורך סרטון — לייבוא הישן אין אותו.)"));
+    igAnalysisBodyEl.appendChild(grid);
+
+    // מילים בכיתובים
+    var wordsCard = el("div", "an-card");
+    wordsCard.appendChild(el("div", "an-card-title", "מילים בכיתובים"));
+    if (!a.patterns.winners.length && !a.patterns.flops.length) {
+      wordsCard.appendChild(el("p", "an-note",
+        "עדיין אין מילה שחוזרת אצל המובילים ונעדרת אצל הנופלים. צריך יותר רילז כדי שזה יהיה אמין."));
+    } else {
+      var words = el("div", "an-words");
+      var winCol = el("div");
+      winCol.appendChild(el("h4", null, "חוזר אצל המובילים"));
+      if (a.patterns.winners.length) {
+        a.patterns.winners.forEach(function (w) { winCol.appendChild(el("span", "an-pill is-win", w)); });
+      } else {
+        winCol.appendChild(el("span", "an-note", "אין מילה מובהקת"));
+      }
+      var flopCol = el("div");
+      flopCol.appendChild(el("h4", null, "חוזר אצל הנופלים"));
+      if (a.patterns.flops.length) {
+        a.patterns.flops.forEach(function (w) { flopCol.appendChild(el("span", "an-pill is-flop", w)); });
+      } else {
+        flopCol.appendChild(el("span", "an-note", "אין מילה מובהקת"));
+      }
+      words.appendChild(winCol);
+      words.appendChild(flopCol);
+      wordsCard.appendChild(words);
+    }
+    igAnalysisBodyEl.appendChild(wordsCard);
+
+    // הרשימה המלאה
+    var listCard = el("div", "an-card");
+    var sortName = IG_SORTS.filter(function (s) { return s.id === state.igSettings.sort; })[0];
+    listCard.appendChild(el("div", "an-card-title", "כל הרילז — לפי " + (sortName ? sortName.name : "")));
+    listCard.appendChild(el("p", "an-note", "הצירים הם דירוג יחסי בין הרילז שלכם (0–100), לא ערך מוחלט: 70 בציר החשיפה " +
+      "אומר שהריל נחשף יותר מ-70% מהרילז האחרים בחלון."));
+    var list = el("div", "an-list");
+    a.ranked.forEach(function (post, i) { list.appendChild(rankedRow(post, i + 1, a)); });
+    listCard.appendChild(list);
+    igAnalysisBodyEl.appendChild(listCard);
+
+    // מתי נמשך לאחרונה
+    if (igData.generatedAt) {
+      var when = new Date(igData.generatedAt);
+      if (!isNaN(when.getTime())) {
+        igAnalysisBodyEl.appendChild(el("p", "an-note", "הנתונים נמשכו לאחרונה ב-" +
+          when.toLocaleDateString("he-IL") + " בשעה " + when.toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" }) + "."));
+      }
+    }
+  }
+
+  // ההגדרות מסתנכרנות בין מכשירים, ולכן השדות נקראים מה-state בכל ציור —
+  // חוץ מהשדה שכרגע בפוקוס, שאחרת היה נדרס תוך כדי הקלדה
+  function syncIgControlValues() {
+    IG_CONTROLS.forEach(function (spec) {
+      var input = document.getElementById("igc-" + spec.key);
+      if (input && document.activeElement !== input) input.value = state.igSettings[spec.key];
+    });
+    var select = document.getElementById("igc-sort");
+    if (select && document.activeElement !== select) select.value = state.igSettings.sort;
+  }
+
+  function renderAnalytics() {
+    if (!analyticsViewEl) return;
+    renderIgControls();
+    syncIgControlValues();
+    renderAnalysisBody();
+  }
+
+  // ---------- מעבר בין המסכים ----------
+  function setView(next) {
+    activeView = next === "analytics" ? "analytics" : "board";
+    var isAnalytics = activeView === "analytics";
+    tabBoardEl.classList.toggle("is-active", !isAnalytics);
+    tabAnalyticsEl.classList.toggle("is-active", isAnalytics);
+    tabBoardEl.setAttribute("aria-selected", String(!isAnalytics));
+    tabAnalyticsEl.setAttribute("aria-selected", String(isAnalytics));
+    boardHeaderBitsEl.hidden = isAnalytics;
+    calendarWrapEl.hidden = isAnalytics;
+    analyticsViewEl.classList.toggle("is-active", isAnalytics);
+    if (isAnalytics) renderAnalytics();
+  }
+
+  tabBoardEl.addEventListener("click", function () { setView("board"); });
+  tabAnalyticsEl.addEventListener("click", function () { setView("analytics"); });
+
+  // ---------- שליפה מאינסטגרם ----------
+  function setRefreshStatus(text, kind) {
+    igRefreshStatusEl.className = "an-refresh-status" + (kind ? " is-" + kind : "");
+    igRefreshStatusEl.innerHTML = "";
+    if (kind === "busy") igRefreshStatusEl.appendChild(el("span", "an-spin"));
+    igRefreshStatusEl.appendChild(document.createTextNode(text));
+  }
+
+  function showRefreshLog(lines) {
+    igRefreshLogEl.innerHTML = "";
+    if (!lines || !lines.length) {
+      igRefreshLogEl.hidden = true;
+      return;
+    }
+    lines.forEach(function (line) { igRefreshLogEl.appendChild(el("div", null, line)); });
+    igRefreshLogEl.hidden = false;
+  }
+
+  function setRefreshBusy(busy) {
+    igRefreshBusy = busy;
+    igRefreshBtn.disabled = busy;
+    igFullRefreshBtn.disabled = busy;
+    igRefreshBtn.style.opacity = busy ? "0.55" : "";
+    igFullRefreshBtn.style.opacity = busy ? "0.55" : "";
+  }
+
+  function runIgRefresh(mode) {
+    if (igRefreshBusy) return;
+    if (location.protocol === "file:") {
+      setRefreshStatus("השליפה רצה בשרת, ולכן עובדת רק באתר המפורסם — לא בקובץ מקומי.", "error");
+      return;
+    }
+
+    setRefreshBusy(true);
+    showRefreshLog(null);
+    setRefreshStatus(mode === "full" ? "מרענן את כל החלון…" : "מחפש רילז חדשים…", "busy");
+
+    fetch("/api/ig-refresh", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        mode: mode,
+        windowDays: state.igSettings.windowDays,
+        fetchLimit: state.igSettings.fetchLimit,
+        refreshDays: state.igSettings.refreshDays
+      })
+    }).then(function (res) {
+      return res.text().then(function (text) {
+        var body = null;
+        try { body = JSON.parse(text); } catch (e) {}
+        if (!body) throw new Error("השרת החזיר תשובה לא צפויה (" + res.status + "). ייתכן ש-/api לא פרוס.");
+        if (!res.ok) {
+          var msg = body.error || ("שגיאה " + res.status);
+          if (body.hint) msg += " " + body.hint;
+          if (body.detail) showRefreshLog([body.detail]);
+          throw new Error(msg);
+        }
+        return body;
+      });
+    }).then(function (body) {
+      showRefreshLog(body.log);
+      setRefreshBusy(false);
+      if (!body.added && !body.updated) {
+        setRefreshStatus(body.message || "אין רילז חדשים — הכול מעודכן.", "ok");
+        return;
+      }
+      setRefreshStatus("נוספו " + body.added + " רילז, עודכנו " + body.updated + ". מושך מהענן…", "busy");
+      // הענן הוא מקור האמת, ולכן קוראים משם ולא מתשובת השרת
+      syncIgFromCloud(false);
+      setTimeout(function () {
+        setRefreshStatus("נוספו " + body.added + " רילז, עודכנו " + body.updated + ".", "ok");
+      }, 1200);
+    }).catch(function (e) {
+      setRefreshBusy(false);
+      setRefreshStatus(e && e.message ? e.message : "השליפה נכשלה.", "error");
+    });
+  }
+
+  igRefreshBtn.addEventListener("click", function () { runIgRefresh("incremental"); });
+  igFullRefreshBtn.addEventListener("click", function () { runIgRefresh("full"); });
+
+  renderBootGate();
   renderHeader();
   renderCalendar();
+  renderAnalytics();
   initCloud();
 })();
 </script>

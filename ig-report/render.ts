@@ -24,29 +24,30 @@ const REPORT_PATH = path.join(__dirname, "report.html");
 const STRONG_HOOK_S = 12; // "strong-hook count (watch ≥ 12s)"
 const REPLAY_WINNER_RATE = 1.2; // "replay-winner count (hook ≥ 1.2)" → replay_rate ≥ 1.2
 
-// ── Input shape (mirrors agent.ts's Post) ───────────────────────────────────
+// ── Input shape — the canonical post, identical to what the board stores ────
 type RawPost = {
   id: string;
   caption: string;
-  permalink: string;
-  thumbnail_url: string;
-  timestamp: string;
-  media_type: string;
-  duration_s: number | null;
+  permalink: string | null;
+  thumbUrl: string | null;
+  thumb: string | null; // already a data URI when the fetcher managed to inline it
+  timestamp: string | null;
+  date: string | null;
+  mediaType: string | null;
+  durationS: number | null;
   reach: number | null;
   views: number | null;
   likes: number | null;
   comments: number | null;
   shares: number | null;
   saved: number | null;
-  total_interactions: number | null;
-  ig_reels_avg_watch_time: number | null;
+  totalInteractions: number | null;
+  watchTimeS: number | null; // seconds, already converted
 };
 
 type DataFile = {
-  generated_at: string;
-  window_days: number;
-  composio_user_id: string;
+  generatedAt: string;
+  windowDays: number;
   posts: RawPost[];
 };
 
@@ -117,6 +118,11 @@ function fmtCompact(n: number | null | undefined): string {
   return Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(n);
 }
 
+/** A reel without a permalink still renders — the link just goes nowhere. */
+function safeHref(url: string | null): string {
+  return url && /^https?:\/\//i.test(url) ? escapeHtml(url) : "#";
+}
+
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -143,12 +149,14 @@ const PLACEHOLDER_THUMB =
   ).toString("base64");
 
 async function downloadThumb(post: RawPost): Promise<string | null> {
-  if (!post.thumbnail_url) return null;
+  // The fetcher inlines thumbnails as it goes, so there is usually nothing to do.
+  if (post.thumb) return post.thumb;
+  if (!post.thumbUrl) return null;
   const outPath = path.join(THUMBS_DIR, `${post.id}.jpg`);
 
   if (!(await fileExists(outPath))) {
     try {
-      await execFileAsync("curl", ["-sL", "--fail", "--max-time", "20", "-o", outPath, post.thumbnail_url]);
+      await execFileAsync("curl", ["-sL", "--fail", "--max-time", "20", "-o", outPath, post.thumbUrl]);
     } catch {
       return null; // download failed — caller falls back to a placeholder
     }
@@ -249,7 +257,7 @@ function postCard(post: Post, rank: number, borderClass: string): string {
   const caption = escapeHtml(post.caption || "(no caption)");
   return `
     <article class="card ${borderClass}">
-      <a class="thumb-link" href="${escapeHtml(post.permalink)}" target="_blank" rel="noopener noreferrer">
+      <a class="thumb-link" href="${safeHref(post.permalink)}" target="_blank" rel="noopener noreferrer">
         <img class="thumb" src="${thumb}" alt="Reel thumbnail" loading="lazy" width="96" height="96" />
       </a>
       <div class="card-body">
@@ -267,7 +275,7 @@ function postCard(post: Post, rank: number, borderClass: string): string {
       <div class="card-right">
         <div class="hook-score">${post.hook_score == null ? "—" : fmtNum(post.hook_score, 0)}</div>
         <div class="hook-score-label">hook score</div>
-        <a class="open-link" href="${escapeHtml(post.permalink)}" target="_blank" rel="noopener noreferrer">open ↗</a>
+        <a class="open-link" href="${safeHref(post.permalink)}" target="_blank" rel="noopener noreferrer">open ↗</a>
       </div>
     </article>`;
 }
@@ -275,7 +283,7 @@ function postCard(post: Post, rank: number, borderClass: string): string {
 function miniCard(post: Post): string {
   const thumb = post.thumbDataUri ?? PLACEHOLDER_THUMB;
   return `
-    <a class="mini-card" href="${escapeHtml(post.permalink)}" target="_blank" rel="noopener noreferrer">
+    <a class="mini-card" href="${safeHref(post.permalink)}" target="_blank" rel="noopener noreferrer">
       <img class="mini-thumb" src="${thumb}" alt="Reel thumbnail" loading="lazy" width="64" height="64" />
       <div class="mini-body">
         <p class="mini-caption">${escapeHtml(post.caption || "(no caption)")}</p>
@@ -308,8 +316,8 @@ async function main() {
 
   // ── Derived per-post metrics ────────────────────────────────────────────
   const withMetrics = raw.posts.map((p, i) => {
-    const watch_s = p.ig_reels_avg_watch_time != null ? p.ig_reels_avg_watch_time / 1000 : null;
-    const hook_rate = safeDiv(watch_s, p.duration_s);
+    const watch_s = p.watchTimeS;
+    const hook_rate = safeDiv(watch_s, p.durationS);
     const replay_rate = safeDiv(p.views, p.reach);
     const share_pct = p.reach ? ((p.shares ?? 0) / p.reach) * 100 : null;
     const save_pct = p.reach ? ((p.saved ?? 0) / p.reach) * 100 : null;
@@ -391,7 +399,7 @@ async function main() {
   ).length;
 
   // ── Render ────────────────────────────────────────────────────────────────
-  const windowLabel = `Last ${raw.window_days} days · generated ${new Date(raw.generated_at).toLocaleString(
+  const windowLabel = `Last ${raw.windowDays} days · generated ${new Date(raw.generatedAt).toLocaleString(
     "en-US",
     { dateStyle: "medium", timeStyle: "short" },
   )}`;
