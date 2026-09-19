@@ -25,7 +25,6 @@ import {
   getInstagramConnection,
   listReelsInWindow,
   attachInsights,
-  inlineThumbs,
   mergePosts,
 } from "./_lib/instagram.mjs";
 
@@ -210,17 +209,35 @@ export default async function handler(req, res) {
 
     await attachInsights(apiKey, COMPOSIO_USER_ID, targets, { concurrency: 4 });
 
-    // A stored thumbnail is already inlined; re-downloading it would only burn time.
-    const needThumbs = targets.filter((r) => !storedById.get(r.id)?.thumb);
-    await inlineThumbs(needThumbs, { concurrency: 4 });
-    note(`הורדו ${needThumbs.filter((r) => r.thumb).length}/${needThumbs.length} תמונות ממוזערות`);
+    // התמונות לא מוטמעות: thumbnail_url של אינסטגרם הוא פריים ברזולוציה מלאה,
+    // ~190KB לריל, ושורה אחת עם כולם הגיעה ל-6.5MB והפילה את הכתיבה בטיימאאוט.
+    // במקום זה נשמר הקישור, והוא מתרענן לכל ריל בחלון בכל ריצה — בחינם, כי
+    // הוא ממילא חוזר ברשימת המדיה. ריל שיצא מהחלון יאבד בסוף את התמונה, וזה
+    // המחיר הנכון מול לוח שלא מצליח להישמר.
+    //
+    // ממוזגים את כל הרילז שנמצאו ולא רק את אלה שנשלפו להם תובנות, כדי שגם
+    // הוותיקים יקבלו קישור תמונה טרי. mergePosts מתעלם מערכים ריקים, ולכן
+    // המדדים השמורים שלהם לא נדרסים.
+    const { posts, added, updated } = mergePosts(stored.posts, reels);
 
-    const { posts, added, updated } = mergePosts(stored.posts, targets);
+    // ניקוי חד־פעמי של ההטמעות הענקיות שכבר נכתבו. תמונות קטנות מהייבוא
+    // המקורי (~22KB) נשארות — הקישורים שלהן פגו מזמן ואין להן תחליף.
+    const MAX_INLINE_THUMB = 40 * 1024;
+    let dropped = 0;
+    for (const post of posts) {
+      if (typeof post.thumb === "string" && post.thumb.length > MAX_INLINE_THUMB) {
+        delete post.thumb;
+        dropped++;
+      }
+    }
+    if (dropped) note(`הוסרו ${dropped} תמונות מוטמעות גדולות מדי`);
+
     const payload = {
       generatedAt: new Date().toISOString(),
       windowDays: Math.max(windowDays, stored.windowDays || 0),
       posts,
     };
+    note(`גודל המטען: ${Math.round(JSON.stringify(payload).length / 1024)}KB`);
     await writeStored(payload);
 
     return send(res, 200, { ok: true, added, updated, total: posts.length, generatedAt: payload.generatedAt, log });
