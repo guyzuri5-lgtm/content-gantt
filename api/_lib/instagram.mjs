@@ -37,9 +37,6 @@ export const METRICS = [
 const TOOL_LIST_MEDIA = process.env.IG_TOOL_LIST_MEDIA || "INSTAGRAM_GET_USER_MEDIA";
 const TOOL_MEDIA_INSIGHTS = process.env.IG_TOOL_INSIGHTS || "INSTAGRAM_GET_POST_INSIGHTS";
 
-const MEDIA_FIELDS =
-  "id,caption,permalink,thumbnail_url,media_url,timestamp,media_type,media_product_type";
-
 /** Reels only. Instagram reports these two for video posts. */
 const VIDEO_TYPES = new Set(["REELS", "VIDEO"]);
 
@@ -197,21 +194,19 @@ export async function describeTools(apiKey, slugs) {
 // ── The pipeline ────────────────────────────────────────────────────────────
 
 /**
- * One page of the user's media. Composio may or may not accept `fields` and
- * `after`; an argument it doesn't know is a hard error, so on the first
- * rejection we retry with the minimum and let Instagram's defaults decide.
+ * One page of the user's media. The tool's parameters are exactly
+ * ig_user_id / limit / after — there is no `fields`, so the field set is
+ * whatever Instagram returns by default.
  */
 async function listMediaPage(apiKey, composioUserId, { limit, after }) {
-  const full = { ig_user_id: "me", limit, fields: MEDIA_FIELDS };
-  if (after) full.after = after;
-  try {
-    return await runTool(apiKey, TOOL_LIST_MEDIA, composioUserId, full);
-  } catch (e) {
-    if (!(e instanceof IgError)) throw e;
-    const minimal = { ig_user_id: "me", limit };
-    if (after) minimal.after = after;
-    return await runTool(apiKey, TOOL_LIST_MEDIA, composioUserId, minimal);
-  }
+  const args = { ig_user_id: "me", limit };
+  if (after) args.after = after;
+  return await runTool(apiKey, TOOL_LIST_MEDIA, composioUserId, args);
+}
+
+/** הצצה גולמית לעמוד המדיה הראשון — לראות אילו שדות באמת חוזרים. */
+export async function peekMedia(apiKey, composioUserId, limit = 3) {
+  return await listMediaPage(apiKey, composioUserId, { limit });
 }
 
 /**
@@ -227,7 +222,7 @@ async function fetchInsights(apiKey, composioUserId, mediaId) {
   for (let attempt = 0; attempt < METRICS.length && metrics.length > 0; attempt++) {
     try {
       const raw = await runTool(apiKey, TOOL_MEDIA_INSIGHTS, composioUserId, {
-        ig_media_id: mediaId,
+        ig_post_id: mediaId,
         metric: metrics.join(","),
       });
       const rows = findArray(raw, looksLikeInsights) || [];

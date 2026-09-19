@@ -21,6 +21,7 @@ import {
   IgError,
   listInstagramTools,
   describeTools,
+  peekMedia,
   getInstagramConnection,
   listReelsInWindow,
   attachInsights,
@@ -117,6 +118,15 @@ export default async function handler(req, res) {
   const body = await readBody(req);
 
   // אבחון: לא עולה כלום ולא נוגע בנתונים, ולכן פטור ממגבלת הקצב
+  if (body.debug === "raw") {
+    try {
+      const raw = await peekMedia(apiKey, COMPOSIO_USER_ID, 3);
+      return send(res, 200, { ok: true, raw });
+    } catch (e) {
+      return send(res, 502, { error: e?.message, detail: e?.detail ? JSON.stringify(e.detail).slice(0, 1500) : undefined });
+    }
+  }
+
   if (body.debug === "schema") {
     try {
       const slugs = Array.isArray(body.slugs) && body.slugs.length
