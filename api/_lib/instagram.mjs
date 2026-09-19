@@ -121,7 +121,8 @@ async function composioFetch(apiKey, path, init = {}) {
 async function runTool(apiKey, slug, userId, args) {
   const body = await composioFetch(apiKey, `/tools/execute/${slug}`, {
     method: "POST",
-    body: JSON.stringify({ user_id: userId, arguments: args }),
+    // בלי version מפורש Composio עלול לא לפתור את הכלי ולהחזיר "not found"
+    body: JSON.stringify({ user_id: userId, arguments: args, version: "latest" }),
   });
   if (body && body.successful === false) {
     throw new IgError(`${slug} failed: ${body.error || "no reason given"}`, body.data ?? null);
@@ -140,6 +141,29 @@ export async function getInstagramConnection(apiKey, composioUserId) {
   const items = body?.items || body?.data || [];
   const active = items.find((a) => String(a?.status || "").toUpperCase() === "ACTIVE");
   return { connected: !!active, account: active || null, all: items };
+}
+
+/**
+ * Which Instagram tools does this project actually expose? Slugs drift between
+ * Composio versions, and a wrong one fails as a flat 404 — so this asks instead
+ * of trusting the docs.
+ */
+export async function listInstagramTools(apiKey) {
+  const attempts = ["toolkit_slug=instagram&limit=200", "toolkit_slugs=instagram&limit=200", "limit=200&search=instagram"];
+  for (const query of attempts) {
+    let body;
+    try {
+      body = await composioFetch(apiKey, `/tools?${query}`);
+    } catch {
+      continue;
+    }
+    const items = body?.items || body?.data || [];
+    const tools = items
+      .map((t) => ({ slug: t.slug || t.name, version: t.version, deprecated: t.deprecated }))
+      .filter((t) => typeof t.slug === "string" && t.slug.toUpperCase().startsWith("INSTAGRAM"));
+    if (tools.length) return { query, count: items.length, tools };
+  }
+  return { query: null, count: 0, tools: [] };
 }
 
 // ── The pipeline ────────────────────────────────────────────────────────────

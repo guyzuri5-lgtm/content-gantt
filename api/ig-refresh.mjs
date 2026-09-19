@@ -19,6 +19,7 @@
 
 import {
   IgError,
+  listInstagramTools,
   getInstagramConnection,
   listReelsInWindow,
   attachInsights,
@@ -112,6 +113,18 @@ export default async function handler(req, res) {
     return send(res, 403, { error: "הבקשה לא הגיעה מהלוח." });
   }
 
+  const body = await readBody(req);
+
+  // אבחון: לא עולה כלום ולא נוגע בנתונים, ולכן פטור ממגבלת הקצב
+  if (body.debug === "tools") {
+    try {
+      const listed = await listInstagramTools(apiKey);
+      return send(res, 200, { ok: true, ...listed });
+    } catch (e) {
+      return send(res, 502, { error: e?.message, detail: e?.detail ? JSON.stringify(e.detail).slice(0, 1200) : undefined });
+    }
+  }
+
   const sinceLastRun = (Date.now() - lastRunAt) / 1000;
   if (sinceLastRun < MIN_SECONDS_BETWEEN_RUNS) {
     return send(res, 429, {
@@ -120,7 +133,6 @@ export default async function handler(req, res) {
   }
   lastRunAt = Date.now();
 
-  const body = await readBody(req);
   const windowDays = clamp(body.windowDays, 30, 1, MAX_WINDOW_DAYS);
   const fetchLimit = clamp(body.fetchLimit, 25, 1, MAX_FETCH_LIMIT);
   const refreshDays = clamp(body.refreshDays, 14, 0, MAX_WINDOW_DAYS);
