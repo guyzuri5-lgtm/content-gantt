@@ -1,9 +1,3 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "api/ig-refresh.mjs": {
-      "maxDuration": 60,
-      "memory": 1024
-    }
-  }
+  "$schema": "https://openapi.vercel.sh/vercel.json"
 }
